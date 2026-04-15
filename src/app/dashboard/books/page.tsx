@@ -44,7 +44,7 @@ export default function BooksDashboard() {
     }
   }
 
-  const { loading: authLoading } = useApp();
+
 
   useEffect(() => {
     if (user) fetchBooks();

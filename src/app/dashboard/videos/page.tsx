@@ -39,7 +39,7 @@ export default function VideosDashboard() {
     }
   }
 
-  const { loading: authLoading } = useApp();
+
 
   useEffect(() => {
     if (user) fetchVideos();
