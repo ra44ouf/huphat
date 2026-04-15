@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useApp } from "@/components/providers";
 
 export default function DoubtsDashboard() {
-  const { user } = useApp();
+  const { user, loading: authLoading } = useApp();
   const [doubts, setDoubts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useApp } from "@/components/providers";
 
 export default function VideosDashboard() {
-  const { user } = useApp();
+  const { user, loading: authLoading } = useApp();
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);

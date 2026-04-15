@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useApp } from "@/components/providers";
 
 export default function BooksDashboard() {
-  const { user } = useApp();
+  const { user, loading: authLoading } = useApp();
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
