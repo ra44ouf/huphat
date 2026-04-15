@@ -1,0 +1,98 @@
+export const translations = {
+  ar: {
+    nav: {
+      home: "الرئيسية",
+      doubts: "الشبهات",
+      books: "الكتب",
+      videos: "الفيديوهات",
+      signIn: "تسجيل الدخول",
+    },
+    hero: {
+      tag: "منصة المعرفة",
+      title: "إجابات واضحة لـ",
+      titleAccent: "شبهات حول الإسلام",
+      sub: "أكثر من 2400 رد علمي على أكثر الشبهات شيوعاً في الإسلام والمسيحية والإلحاد - في مكان واحد.",
+      placeholder: "اسأل سؤالك أو ابحث عن شبهة...",
+      search: "بحث",
+    },
+    stats: {
+      answers: "إجابة",
+      scholars: "عالم",
+      readers: "قارئ",
+    },
+    categories: {
+      title: "تصفح حسب التصنيف",
+      sub: "اختر التصنيف الذي تبحث فيه عن إجابات",
+      islam: "الإسلام والقرآن",
+      science: "العلم والمنطق",
+      history: "التاريخ والتراث",
+      society: "المرأة والمجتمع",
+      atheism: "الإلحاد والمادية",
+      others: "الأديان الأخرى",
+    },
+    latest: {
+      title: "آخر الشبهات المجاب عنها",
+      viewAll: "عرض الكل",
+    },
+    scholars: {
+      title: "باحثون وأكاديميون",
+      sub: "فريق من المتخصصين يعمل على دحض الشبهات بالعلم والمنطق",
+      join: "انضم إلينا",
+    },
+    footer: {
+      about: "عن المنصة",
+      contact: "اتصل بنا",
+      privacy: "سياسة الخصوصية",
+      terms: "شروط الاستخدام",
+      rights: "جميع الحقوق محفوظة © 2024 منصة شبهات",
+    },
+  },
+  en: {
+    nav: {
+      home: "Home",
+      doubts: "Doubts",
+      books: "Books",
+      videos: "Videos",
+      signIn: "Sign In",
+    },
+    hero: {
+      tag: "Knowledge Platform",
+      title: "Clear answers to",
+      titleAccent: "doubts about Islam",
+      sub: "2,400+ scholarly responses to the most common doubts in Islam, Christianity, and Atheism — all in one place.",
+      placeholder: "Ask your question or search a doubt...",
+      search: "Search",
+    },
+    stats: {
+      answers: "Answers",
+      scholars: "Scholars",
+      readers: "Readers",
+    },
+    categories: {
+      title: "Browse by Category",
+      sub: "Choose the category where you are looking for answers",
+      islam: "Islam & Quran",
+      science: "Science & Logic",
+      history: "History & Heritage",
+      society: "Women & Society",
+      atheism: "Atheism & Materialism",
+      others: "Other Religions",
+    },
+    latest: {
+      title: "Latest Refuted Doubts",
+      viewAll: "View All",
+    },
+    scholars: {
+      title: "Researchers & Academics",
+      sub: "A team of specialists working to refute doubts with science and logic",
+      join: "Join Us",
+    },
+    footer: {
+      about: "About",
+      contact: "Contact Us",
+      privacy: "Privacy Policy",
+      terms: "Terms of Use",
+      rights: "All rights reserved © 2024 Shubuhat Platform",
+    },
+  },
+};
