@@ -54,15 +54,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     fetchAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-            const currentUser = session?.user ?? null;
-            setUser(currentUser);
-            if (currentUser) {
-                const { data } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
-                setProfile(data);
-            }
-        } else if (event === 'SIGNED_OUT') {
-            setUser(null);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        
+        if (currentUser) {
+            const { data } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+            setProfile(data);
+        } else {
             setProfile(null);
         }
         setLoading(false);

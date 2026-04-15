@@ -9,10 +9,12 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
 export function Navbar() {
-  const { lang, toggleLang, user, loading } = useApp();
+  const { lang, toggleLang, user, profile, loading } = useApp();
   const t = translations[lang].nav;
   const supabase = createClient();
   const router = useRouter();
+
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'publisher';
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -51,34 +53,36 @@ export function Navbar() {
           {lang === 'ar' ? 'EN' : 'AR'}
         </button>
         
-        {!loading && (
-          user ? (
-            <div className="flex items-center gap-2 group relative">
-                <Link 
-                    href="/dashboard" 
-                    className="flex items-center gap-2 bg-white/10 hover:bg-white/20 p-1.5 pr-4 rounded-full transition-all border border-white/10 group shadow-inner"
-                >
-                    <span className="text-[12px] font-black hidden lg:inline uppercase tracking-tight">
-                        {lang === 'ar' ? 'لوحة التحكم' : 'Dashboard'}
-                    </span>
-                    <div className="w-8 h-8 bg-shubuhat-gold rounded-full flex items-center justify-center text-shubuhat-green shadow-md group-hover:scale-105 transition-transform">
-                        <User size={18} fill="currentColor" strokeWidth={3} />
-                    </div>
-                </Link>
-                <button 
-                  onClick={handleLogout}
-                  className="p-2.5 text-red-300 hover:text-red-400 hover:bg-white/5 rounded-xl transition-all"
-                  title={lang === 'ar' ? 'خروج' : 'Logout'}
-                >
-                  <LogOut size={18} />
-                </button>
-            </div>
-          ) : (
-            <Link href="/login" className="flex items-center gap-2 bg-shubuhat-gold text-shubuhat-green px-6 py-2.5 rounded-full text-[13px] font-black hover:bg-shubuhat-gold-light transition-all shadow-xl active:scale-95 uppercase">
-              <LogIn size={16} />
-              {t.signIn}
-            </Link>
-          )
+        {loading ? (
+          <div className="w-10 h-10 rounded-full bg-white/5 animate-pulse" />
+        ) : user ? (
+          <div className="flex items-center gap-2 group relative">
+              <Link 
+                  href={isAdmin ? "/dashboard" : "/profile"} 
+                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 p-1.5 pr-4 rounded-full transition-all border border-white/10 group shadow-inner"
+              >
+                  <span className="text-[12px] font-black hidden lg:inline uppercase tracking-tight">
+                      {lang === 'ar' 
+                        ? (isAdmin ? 'لوحة التحكم' : 'حسابي') 
+                        : (isAdmin ? 'Dashboard' : 'My Account')}
+                  </span>
+                  <div className="w-8 h-8 bg-shubuhat-gold rounded-full flex items-center justify-center text-shubuhat-green shadow-md group-hover:scale-105 transition-transform">
+                      <User size={18} fill="currentColor" strokeWidth={3} />
+                  </div>
+              </Link>
+              <button 
+                onClick={handleLogout}
+                className="p-2.5 text-red-300 hover:text-red-400 hover:bg-white/5 rounded-xl transition-all"
+                title={lang === 'ar' ? 'خروج' : 'Logout'}
+              >
+                <LogOut size={18} />
+              </button>
+          </div>
+        ) : (
+          <Link href="/login" className="flex items-center gap-2 bg-shubuhat-gold text-shubuhat-green px-6 py-2.5 rounded-full text-[13px] font-black hover:bg-shubuhat-gold-light transition-all shadow-xl active:scale-95 uppercase">
+            <LogIn size={16} />
+            {t.signIn}
+          </Link>
         )}
         
         <button className="md:hidden p-2 text-white hover:bg-white/10 rounded-xl transition-all">
