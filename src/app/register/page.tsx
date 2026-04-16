@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { signup } from '@/app/login/actions'
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import Link from "next/link";
@@ -10,6 +9,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useApp } from "@/components/providers";
 import { translations } from "@/lib/translations";
+import { createClient } from "@/utils/supabase/client";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -54,7 +54,25 @@ export default function RegisterPage() {
                          <p className="text-white/50 font-bold text-sm">{t.registerSub}</p>
                      </div>
 
-                     <form className="space-y-4 md:space-y-5">
+                     <form className="space-y-4 md:space-y-5" onSubmit={async (e) => {
+                         e.preventDefault();
+                         const formData = new FormData(e.currentTarget);
+                         const fullName = formData.get('fullName') as string;
+                         const email = formData.get('email') as string;
+                         const password = formData.get('password') as string;
+                         
+                         const supabase = createClient();
+                         const { error } = await supabase.auth.signUp({ 
+                             email, 
+                             password, 
+                             options: { data: { full_name: fullName } } 
+                         });
+                         if (error) {
+                             alert(lang === 'ar' ? 'حدث خطأ أثناء التسجيل' : 'Error during registration');
+                         } else {
+                             window.location.href = '/dashboard';
+                         }
+                     }}>
                          <motion.div 
                              initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.55 }}
                              className="group"
@@ -125,7 +143,7 @@ export default function RegisterPage() {
                              initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.9 }}
                              whileHover={{ scale: 1.02 }}
                              whileTap={{ scale: 0.98 }}
-                             formAction={signup} 
+                             type="submit"
                              className="w-full bg-shubuhat-gold text-shubuhat-green py-4 md:py-5 rounded-2xl font-black text-sm transition-all shadow-[0_0_20px_rgba(201,165,108,0.2)] hover:shadow-[0_0_30px_rgba(201,165,108,0.4)] mt-4 md:mt-6 flex items-center justify-center gap-2 tracking-widest"
                          >
                              {t.registerBtn}
