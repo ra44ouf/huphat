@@ -32,7 +32,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-shubuhat-green text-white h-[72px] px-6 flex items-center shadow-xl border-b border-white/5">
+    <nav className="hidden md:flex sticky top-0 z-50 bg-shubuhat-green text-white h-[72px] px-6 items-center shadow-xl border-b border-white/5">
       <Link href="/" className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity">
         <div className="relative w-12 h-12 overflow-hidden rounded-xl shadow-lg border border-white/10 bg-white">
           <Image 

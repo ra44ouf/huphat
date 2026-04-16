@@ -48,8 +48,8 @@ export default function BooksPage() {
             <div className="text-[20vw] font-black absolute -top-10 -left-10 text-white">BOOKS</div>
         </div>
         <div className="max-w-6xl mx-auto text-center text-white relative z-10">
-            <h1 className="text-4xl md:text-6xl font-black mb-6">
-                {lang === 'ar' ? 'المكتبة الرقمية' : 'Digital Library'}
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-6">
+                {lang === 'ar' ? 'المكتبة العلمية' : 'Scientific Library'}
             </h1>
             <p className="max-w-2xl mx-auto text-white/70 font-bold text-lg mb-10">
                 {lang === 'ar' 

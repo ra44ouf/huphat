@@ -40,12 +40,12 @@ export function Hero() {
           {t.tag}
         </div>
         
-        <h1 className="text-4xl md:text-6xl font-black mb-4 leading-tight">
+        <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight">
           {t.title} <br />
           <span className="text-shubuhat-gold">{t.titleAccent}</span>
         </h1>
         
-        <p className="text-white/60 text-base md:text-lg mb-10 max-w-xl mx-auto font-medium">
+        <p className="text-white/60 text-sm md:text-lg mb-10 max-w-xl mx-auto font-medium">
           {t.sub}
         </p>
 

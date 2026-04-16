@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   }
 };
 
+import { MobileNav } from "@/components/mobile-nav";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,8 +33,11 @@ export default function RootLayout({
       dir="rtl"
       className={`${cairo.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">
-        <Providers>{children}</Providers>
+      <body className="min-h-full flex flex-col font-sans pb-28 md:pb-0 relative">
+        <Providers>
+          {children}
+          <MobileNav />
+        </Providers>
       </body>
     </html>
   );

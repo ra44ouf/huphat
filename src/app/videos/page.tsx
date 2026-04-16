@@ -51,7 +51,7 @@ export default function VideosPage() {
 
       <section className="py-20 px-4 border-b border-white/5 relative bg-gradient-to-b from-shubuhat-green/20 to-transparent">
         <div className="max-w-6xl mx-auto flex flex-col items-center text-center">
-            <h1 className="text-4xl md:text-6xl font-black mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-shubuhat-gold">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-shubuhat-gold">
                 {lang === 'ar' ? 'الإنتاج المرئي' : 'Visual Content'}
             </h1>
             <p className="max-w-2xl mx-auto text-white/50 font-medium text-lg mb-10 leading-relaxed">
