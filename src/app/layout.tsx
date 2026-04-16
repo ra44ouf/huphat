@@ -21,6 +21,7 @@ export const metadata: Metadata = {
 };
 
 import { MobileNav } from "@/components/mobile-nav";
+import { SplashScreen } from "@/components/splash-screen";
 
 export default function RootLayout({
   children,
@@ -34,6 +35,7 @@ export default function RootLayout({
       className={`${cairo.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans pb-28 md:pb-0 relative">
+        <SplashScreen />
         <Providers>
           {children}
           <MobileNav />

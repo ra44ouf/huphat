@@ -5,11 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useApp } from "@/components/providers";
 import { translations } from "@/lib/translations";
-import { Home, Book, Video, HelpCircle, Download } from "lucide-react";
+import { Home, Book, Video, HelpCircle, Download, User } from "lucide-react";
 
 export function MobileNav() {
   const pathname = usePathname();
-  const { lang } = useApp();
+  const { lang, user } = useApp();
   const t = translations[lang].nav;
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -47,6 +47,7 @@ export function MobileNav() {
     { href: "/doubts", icon: HelpCircle, label: t.doubts },
     { href: "/books", icon: Book, label: t.books },
     { href: "/videos", icon: Video, label: t.videos },
+    { href: user ? "/profile" : "/login", icon: User, label: lang === 'ar' ? 'حسابي' : 'Account' },
   ];
 
   return (
