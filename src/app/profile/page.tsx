@@ -51,21 +51,23 @@ export default function ProfilePage() {
             </div>
 
             {/* Notice Box */}
-            <div className="bg-amber-50 border border-amber-100 p-6 rounded-3xl mb-8 flex items-start gap-4">
-              <div className="p-3 bg-amber-100 text-amber-600 rounded-2xl">
-                <ShieldAlert size={24} />
+            {profile?.role !== 'admin' && profile?.role !== 'publisher' && (
+              <div className="bg-amber-50 border border-amber-100 p-6 rounded-3xl mb-8 flex items-start gap-4">
+                <div className="p-3 bg-amber-100 text-amber-600 rounded-2xl">
+                  <ShieldAlert size={24} />
+                </div>
+                <div>
+                  <h3 className="text-amber-900 font-black mb-1">
+                    {lang === 'ar' ? 'تنبيه الحساب' : 'Account Notice'}
+                  </h3>
+                  <p className="text-amber-800/80 font-bold text-sm leading-relaxed">
+                    {lang === 'ar' 
+                      ? 'حسابك مخصص للقراءة والمشاهدة فقط حالياً. لطلب صلاحيات النشر (آدمن)، يرجى التواصل مع إدارة المنصة.' 
+                      : 'Your account is restricted to viewing only. Contact administration to request publishing permissions.'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-amber-900 font-black mb-1">
-                  {lang === 'ar' ? 'تنبيه الحساب' : 'Account Notice'}
-                </h3>
-                <p className="text-amber-800/80 font-bold text-sm leading-relaxed">
-                  {lang === 'ar' 
-                    ? 'حسابك مخصص للقراءة والمشاهدة فقط حالياً. لطلب صلاحيات النشر (آدمن)، يرجى التواصل مع إدارة المنصة.' 
-                    : 'Your account is restricted to viewing only. Contact administration to request publishing permissions.'}
-                </p>
-              </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-1 gap-4 mb-8">
               <div className="flex items-center justify-between p-4 bg-shubuhat-green-ghost rounded-2xl border border-shubuhat-border-lite">
