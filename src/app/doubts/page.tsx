@@ -15,43 +15,74 @@ export default function DoubtsPage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
 
   const supabase = createClient();
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    if (q) {
+      setSearchQuery(q);
+      setSearchInput(q);
+    }
+  }, []);
+
+  useEffect(() => {
     async function fetchData() {
-      setLoading(true);
-      
-      // Fetch Categories
-      const { data: catData } = await supabase.from('categories').select('*');
-      if (catData) setCategories(catData);
+      try {
+        setLoading(true);
+        
+        // Fetch Categories
+        const { data: catData, error: catError } = await supabase.from('categories').select('*');
+        if (catData) setCategories(catData);
+        if (catError) console.error("Categories error:", catError);
 
-      // Fetch Doubts
-      let query = supabase.from('doubts').select(`
-        *,
-        categories (
-          title_ar,
-          title_en
-        ),
-        profiles (
-          display_name_ar,
-          display_name_en,
-          is_verified
-        )
-      `);
+        // Fetch Doubts
+        let query = supabase.from('doubts').select(`
+          *,
+          categories (
+            title_ar,
+            title_en
+          ),
+          profiles (
+            display_name_ar,
+            display_name_en,
+            is_verified
+          )
+        `);
 
-      if (selectedCategory) {
-        query = query.eq('category_id', selectedCategory);
+        if (selectedCategory) {
+          query = query.eq('category_id', selectedCategory);
+        }
+
+        if (searchQuery) {
+          query = query.or(`title_ar.ilike.%${searchQuery}%,title_en.ilike.%${searchQuery}%,excerpt_ar.ilike.%${searchQuery}%`);
+        }
+
+        const { data: doubtData, error: doubtError } = await query.order('created_at', { ascending: false });
+        if (doubtData) setDoubts(doubtData);
+        if (doubtError) console.error("Doubts error:", doubtError);
+        
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching data", err);
+        setLoading(false);
       }
-
-      const { data: doubtData } = await query.order('created_at', { ascending: false });
-      if (doubtData) setDoubts(doubtData);
-      
-      setLoading(false);
     }
 
-    fetchData();
-  }, [selectedCategory]);
+    // Small delay to wait for initial query parsing
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [selectedCategory, searchQuery, supabase]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchQuery(searchInput);
+  };
 
   return (
     <main className="min-h-screen bg-background flex flex-col">
@@ -62,16 +93,18 @@ export default function DoubtsPage() {
             <h1 className="text-4xl md:text-5xl font-black mb-6">
                 {lang === 'ar' ? 'جميع الشبهات والردود' : 'All Doubts & Refutations'}
             </h1>
-            <div className="max-w-xl mx-auto flex items-center bg-white rounded-full p-1 shadow-2xl overflow-hidden group">
+            <form onSubmit={handleSearchSubmit} className="max-w-xl mx-auto flex items-center bg-white rounded-full p-1 shadow-2xl overflow-hidden group">
                 <div className="flex-[0_0_auto] px-5 text-shubuhat-text-3">
                     <Search size={20} />
                 </div>
                 <input 
                     type="text" 
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
                     placeholder={translations[lang].hero.placeholder}
                     className="flex-1 bg-transparent border-none py-3 text-shubuhat-text-1 focus:outline-none font-medium placeholder:text-shubuhat-text-3"
                 />
-            </div>
+            </form>
         </div>
       </section>
 
@@ -111,11 +144,17 @@ export default function DoubtsPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {doubts.map((doubt) => (
+                    {doubts.length === 0 ? (
+                        <div className="col-span-2 text-center py-20 bg-white rounded-3xl border border-shubuhat-border-lite">
+                            <p className="font-bold text-shubuhat-text-3">
+                                {lang === 'ar' ? 'لا توجد نتائج مطابقة للبحث' : 'No matching results found.'}
+                            </p>
+                        </div>
+                    ) : doubts.map((doubt) => (
                         <Link 
                             href={`/doubts/${doubt.slug}`}
                             key={doubt.id} 
-                            className="bg-white border border-shubuhat-border-lite p-8 rounded-3xl hover:border-shubuhat-gold transition-all hover:shadow-xl shadow-sm group"
+                            className="bg-white border border-shubuhat-border-lite p-8 rounded-3xl hover:border-shubuhat-gold transition-all hover:shadow-xl shadow-sm group flex flex-col"
                         >
                             <div className="flex items-center gap-2 mb-4">
                                 <span className="bg-shubuhat-gold/10 text-shubuhat-gold text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded">
@@ -131,11 +170,11 @@ export default function DoubtsPage() {
                                 {lang === 'ar' ? doubt.title_ar : doubt.title_en}
                             </h3>
                             
-                            <p className="text-shubuhat-text-3 text-sm leading-relaxed mb-6 line-clamp-2">
+                            <p className="text-shubuhat-text-3 text-sm leading-relaxed mb-6 line-clamp-2 flex-1">
                                 {lang === 'ar' ? doubt.excerpt_ar : doubt.excerpt_en}
                             </p>
 
-                            <div className="flex items-center gap-2 pt-4 border-t border-shubuhat-border-lite">
+                            <div className="flex items-center gap-2 pt-4 border-t border-shubuhat-border-lite mt-auto">
                                 <div className="w-8 h-8 rounded-full bg-shubuhat-green-ghost flex items-center justify-center text-shubuhat-green font-black text-xs">
                                     {doubt.profiles?.display_name_ar?.[0] || 'A'}
                                 </div>

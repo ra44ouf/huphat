@@ -6,27 +6,35 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { useApp } from "@/components/providers";
 import { Download, Search, Book as BookIcon } from "lucide-react";
+import Image from "next/image";
 
 export default function BooksPage() {
   const { lang } = useApp();
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const supabase = createClient();
 
   useEffect(() => {
     async function fetchBooks() {
-      setLoading(true);
-      const { data } = await supabase
-        .from('books')
-        .select(`
-          *,
-          profiles (display_name_ar, display_name_en, is_verified)
-        `)
-        .order('created_at', { ascending: false });
-      
-      if (data) setBooks(data);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('books')
+          .select(`
+            *,
+            profiles (display_name_ar, display_name_en, is_verified)
+          `)
+          .order('created_at', { ascending: false });
+        
+        if (data) setBooks(data);
+        if (error) console.error("Books error:", error);
+      } catch(err) {
+        console.error("Failed to load books:", err);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchBooks();
   }, []);
@@ -54,6 +62,8 @@ export default function BooksPage() {
                 </div>
                 <input 
                     type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={lang === 'ar' ? 'بحث في الكتب...' : 'Search books...'}
                     className="flex-1 bg-transparent border-none py-3 text-shubuhat-text-1 focus:outline-none font-medium placeholder:text-shubuhat-text-3"
                 />
@@ -68,10 +78,10 @@ export default function BooksPage() {
             </div>
         ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-                {books.map((book) => (
-                    <div key={book.id} className="group">
+                {books.filter(b => (b.title_ar?.includes(searchQuery) || b.title_en?.toLowerCase().includes(searchQuery.toLowerCase()))).map((book) => (
+                    <div key={book.id} className="group flex flex-col">
                         <div className="relative aspect-[3/4] rounded-[40px] overflow-hidden shadow-xl border border-shubuhat-border-lite mb-6 group-hover:shadow-2xl transition-all duration-500">
-                             <img src={book.cover_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={book.title_ar} />
+                             <Image src={book.cover_url || '/logo.jpg'} fill className="object-cover group-hover:scale-110 transition-transform duration-700" alt={book.title_ar} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
                              <div className="absolute inset-0 bg-gradient-to-t from-shubuhat-green via-transparent to-transparent opacity-60" />
                              <div className="absolute bottom-6 left-6 right-6">
                                 <a 

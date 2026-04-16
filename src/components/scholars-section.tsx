@@ -3,6 +3,7 @@
 import { useApp } from "@/components/providers";
 import { translations } from "@/lib/translations";
 import { Award, ShieldCheck, Microscope, UserPlus } from "lucide-react";
+import Link from "next/link";
 
 export function ScholarsSection() {
   const { lang } = useApp();
@@ -28,10 +29,10 @@ export function ScholarsSection() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                <button className="bg-shubuhat-gold hover:bg-shubuhat-gold-light text-shubuhat-green px-10 py-4 rounded-full font-black text-sm uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2">
+                <Link href="/register" className="bg-shubuhat-gold hover:bg-shubuhat-gold-light text-shubuhat-green px-10 py-4 rounded-full font-black text-sm uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2">
                     <UserPlus size={18} />
                     {t.join}
-                </button>
+                </Link>
             </div>
           </div>
 

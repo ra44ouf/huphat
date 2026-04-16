@@ -6,27 +6,35 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { useApp } from "@/components/providers";
 import { Play, Search, Video as VideoIcon, CheckCircle2 } from "lucide-react";
+import Image from "next/image";
 
 export default function VideosPage() {
   const { lang } = useApp();
   const [videos, setVideos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const supabase = createClient();
 
   useEffect(() => {
     async function fetchVideos() {
-      setLoading(true);
-      const { data } = await supabase
-        .from('videos')
-        .select(`
-          *,
-          profiles (display_name_ar, display_name_en, is_verified)
-        `)
-        .order('created_at', { ascending: false });
-      
-      if (data) setVideos(data);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('videos')
+          .select(`
+            *,
+            profiles (display_name_ar, display_name_en, is_verified)
+          `)
+          .order('created_at', { ascending: false });
+        
+        if (data) setVideos(data);
+        if (error) console.error("Videos error:", error);
+      } catch(err) {
+        console.error("Failed to load videos:", err);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchVideos();
   }, []);
@@ -55,6 +63,8 @@ export default function VideosPage() {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-shubuhat-gold transition-colors" size={20} />
                 <input 
                     type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={lang === 'ar' ? 'ابحث عن فيديو...' : 'Search for a video...'}
                     className="w-full bg-white/5 border border-white/10 py-4 px-12 rounded-2xl focus:outline-none focus:border-shubuhat-gold/50 transition-all font-medium"
                 />
@@ -69,14 +79,16 @@ export default function VideosPage() {
             </div>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-                {videos.map((video) => (
-                    <div key={video.id} className="group cursor-pointer">
+                {videos.filter(v => (v.title_ar?.includes(searchQuery) || v.title_en?.toLowerCase().includes(searchQuery.toLowerCase()))).map((video) => (
+                    <div key={video.id} className="group cursor-pointer flex flex-col">
                         <div className="relative aspect-video rounded-[32px] overflow-hidden border border-white/10 mb-5 group-hover:border-shubuhat-gold/50 transition-all duration-500 shadow-2xl">
                              {getYoutubeId(video.youtube_url) ? (
-                                <img 
+                                <Image 
                                     src={`https://img.youtube.com/vi/${getYoutubeId(video.youtube_url)}/maxresdefault.jpg`} 
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                                    className="object-cover group-hover:scale-110 transition-transform duration-700" 
                                     alt={video.title_ar} 
+                                    fill
+                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                 />
                              ) : <div className="w-full h-full bg-shubuhat-green/20" />}
                              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all" />

@@ -1,37 +1,39 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useApp } from "@/components/providers";
 import { translations } from "@/lib/translations";
-import { ArrowLeft, ArrowRight, MessageCircle, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, ChevronLeft, ChevronRight, Loader2, MessageSquareOff } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
 export function LatestDoubts() {
   const { lang } = useApp();
   const t = translations[lang].latest;
+  const [doubts, setDoubts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
-  const doubts = [
-    {
-      title: lang === 'ar' ? 'هل القرآن مقتبس من الكتب السابقة؟' : 'Is the Quran quoted from previous books?',
-      slug: 'quran-quoted',
-      category: lang === 'ar' ? 'شبهات القرآن' : 'Quranic Doubts',
-      excerpt: lang === 'ar' ? 'الرد على دعوى اقتباس القرآن من التوراة والإنجيل، وتحليل الاختلافات الجوهرية...' : 'Responding to the claim that the Quran was quoted from the Torah and the Bible...',
-      date: '2024-04-12',
-    },
-    {
-      title: lang === 'ar' ? 'شبهة زواج النبي صلى الله عليه وسلم من عائشة' : 'Doubt about the Prophet\'s marriage to Aisha',
-      slug: 'biography',
-      category: lang === 'ar' ? 'السيرة النبوية' : 'Prophetic Biography',
-      excerpt: lang === 'ar' ? 'تحليل تاريخي وعلمي للسياق الاجتماعي في ذلك الوقت والرد على الانتقادات المعاصرة...' : 'Historical and scientific analysis of the social context at that time...',
-      date: '2024-04-10',
-    },
-    {
-      title: lang === 'ar' ? 'هل يتعارض العلم مع وجود الخالق؟' : 'Does science conflict with the existence of a Creator?',
-      slug: 'science-creator',
-      category: lang === 'ar' ? 'الإلحاد' : 'Atheism',
-      excerpt: lang === 'ar' ? 'مناقشة الأسس الفلسفية للعلم الحديث وكيف يشير التصميم في الكون إلى الخالق...' : 'Discussing the philosophical foundations of modern science and cosmic design...',
-      date: '2024-04-08',
-    },
-  ];
+  useEffect(() => {
+    async function fetchLatest() {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('doubts')
+          .select('*, categories(title_ar, title_en)')
+          .order('created_at', { ascending: false })
+          .limit(3);
+        
+        if (error) console.error("Latest doubts error:", error);
+        if (data) setDoubts(data);
+      } catch (err) {
+        console.error("Failed to fetch latest doubts:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchLatest();
+  }, []);
 
   return (
     <section className="py-24 px-4 bg-shubuhat-green-ghost border-t border-shubuhat-border-lite relative overflow-hidden">
@@ -52,47 +54,67 @@ export function LatestDoubts() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {doubts.map((doubt, i) => (
-            <div 
-              key={i} 
-              className="group bg-white rounded-2xl p-0 shadow-sm hover:shadow-xl transition-all border border-shubuhat-border-lite overflow-hidden flex flex-col"
-            >
-              <div className="p-8 flex-1">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="bg-shubuhat-gold/10 text-shubuhat-gold text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded">
-                    {doubt.category}
-                  </span>
-                </div>
-                
-                <h3 className="text-xl font-black text-shubuhat-green mb-4 leading-snug group-hover:text-shubuhat-gold transition-colors">
-                  {doubt.title}
-                </h3>
-                
-                <p className="text-shubuhat-text-3 text-sm leading-relaxed mb-6">
-                  {doubt.excerpt}
-                </p>
-              </div>
-
-              <div className="px-8 py-5 border-t border-shubuhat-border-lite bg-shubuhat-green-ghost/50 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-shubuhat-text-3 text-[11px] font-bold">
-                  <Clock size={14} />
-                  {doubt.date}
-                </div>
-                <Link href={`/doubts/${doubt.slug}`} className="text-shubuhat-green font-black text-[11px] uppercase tracking-widest flex items-center gap-1 group/btn">
-                  {lang === 'ar' ? 'اقرأ الرد' : 'READ ANSWER'}
-                  {lang === 'ar' ? <ArrowLeft size={14} className="group-hover/btn:-translate-x-1 transition-transform" /> : <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />}
-                </Link>
-              </div>
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="animate-spin text-shubuhat-gold" size={40} />
+          </div>
+        ) : doubts.length === 0 ? (
+          <div className="bg-white/50 backdrop-blur-sm border-2 border-dashed border-shubuhat-border-lite p-16 rounded-[40px] text-center">
+            <div className="w-16 h-16 bg-shubuhat-green/5 rounded-full flex items-center justify-center mx-auto mb-4 text-shubuhat-green/20">
+              <MessageSquareOff size={32} />
             </div>
-          ))}
-        </div>
+            <h3 className="text-xl font-black text-shubuhat-green mb-1">
+              {lang === 'ar' ? 'انتظروا أولى الردود قريباً' : 'Official responses coming soon'}
+            </h3>
+            <p className="text-shubuhat-text-3 font-bold text-sm">
+              {lang === 'ar' ? 'نحن نعمل حالياً على تجهيز ردود علمية موثقة.' : 'We are currently preparing documented scientific responses.'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {doubts.map((doubt, i) => (
+              <div 
+                key={doubt.id} 
+                className="group bg-white rounded-2xl p-0 shadow-sm hover:shadow-xl transition-all border border-shubuhat-border-lite overflow-hidden flex flex-col"
+              >
+                <div className="p-8 flex-1">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="bg-shubuhat-gold/10 text-shubuhat-gold text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded">
+                      {lang === 'ar' ? doubt.categories?.title_ar : doubt.categories?.title_en}
+                    </span>
+                  </div>
+                  
+                  <h3 className="text-xl font-black text-shubuhat-green mb-4 leading-snug group-hover:text-shubuhat-gold transition-colors">
+                    {lang === 'ar' ? doubt.title_ar : doubt.title_en}
+                  </h3>
+                  
+                  <p className="text-shubuhat-text-3 text-sm leading-relaxed mb-6 line-clamp-3">
+                    {lang === 'ar' ? doubt.excerpt_ar : doubt.excerpt_en}
+                  </p>
+                </div>
 
-        <div className="mt-12 md:hidden text-center">
-            <button className="bg-shubuhat-green text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest hover:bg-shubuhat-green-mid transition-all shadow-lg active:scale-95">
-                {t.viewAll}
-            </button>
-        </div>
+                <div className="px-8 py-5 border-t border-shubuhat-border-lite bg-shubuhat-green-ghost/50 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-shubuhat-text-3 text-[11px] font-bold">
+                    <Clock size={14} />
+                    {new Date(doubt.created_at).toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}
+                  </div>
+                  <Link href={`/doubts/${doubt.slug}`} className="text-shubuhat-green font-black text-[11px] uppercase tracking-widest flex items-center gap-1 group/btn">
+                    {lang === 'ar' ? 'اقرأ الرد' : 'READ ANSWER'}
+                    {lang === 'ar' ? <ArrowLeft size={14} className="group-hover/btn:-translate-x-1 transition-transform" /> : <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />}
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {doubts.length > 0 && (
+          <div className="mt-12 md:hidden text-center">
+              <Link href="/doubts" className="inline-block bg-shubuhat-green text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest hover:bg-shubuhat-green-mid transition-all shadow-lg active:scale-95">
+                  {t.viewAll}
+              </Link>
+          </div>
+        )}
       </div>
     </section>
   );
