@@ -72,12 +72,8 @@ export default function DoubtsPage() {
       }
     }
 
-    // Small delay to wait for initial query parsing
-    const timer = setTimeout(() => {
-      fetchData();
-    }, 50);
-    return () => clearTimeout(timer);
-  }, [selectedCategory, searchQuery, supabase]);
+    fetchData();
+  }, [selectedCategory, searchQuery]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();

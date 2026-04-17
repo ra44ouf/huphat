@@ -30,20 +30,28 @@ export function Providers({ children }: { children: React.ReactNode }) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user ?? null;
+      console.log("Current session user:", currentUser?.id);
       setUser(currentUser);
 
       if (currentUser) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', currentUser.id)
           .single();
-        setProfile(data);
+        
+        if (error) {
+           console.error("Profile fetch error:", error);
+           // Fallback to minimal profile if DB fetch fails
+           setProfile({ full_name: currentUser.user_metadata?.full_name || currentUser.email });
+        } else {
+           setProfile(data);
+        }
       } else {
         setProfile(null);
       }
     } catch (err) {
-      console.error("Auth fetch error:", err);
+      console.error("Auth fetch catastrophic error:", err);
     } finally {
       setLoading(false);
     }
@@ -54,12 +62,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
     fetchAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log("Auth state change event:", event);
         const currentUser = session?.user ?? null;
         setUser(currentUser);
         
         if (currentUser) {
-            const { data } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
-            setProfile(data);
+            const { data, error } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+            if (!error && data) {
+                setProfile(data);
+            } else {
+                setProfile({ full_name: currentUser.user_metadata?.full_name || currentUser.email });
+            }
         } else {
             setProfile(null);
         }

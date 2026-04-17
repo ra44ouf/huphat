@@ -45,7 +45,7 @@ export default function Home() {
       }
     }
     fetchStats();
-  }, [supabase]);
+  }, []);
 
   return (
     <main className="flex-1">
