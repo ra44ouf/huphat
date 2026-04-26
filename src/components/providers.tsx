@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 
 type Language = "ar" | "en";
@@ -106,7 +106,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     }
 
     const subId = `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
         console.log("Auth state change event:", event, "User ID:", session?.user?.id);
         
         const currentUser = session?.user ?? null;
