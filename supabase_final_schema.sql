@@ -2,14 +2,17 @@
 -- منصة شبهات - مخطط قاعدة البيانات الشامل للإدارة والأعضاء
 -- ==========================================
 
--- مسح الجداول والسياسات القديمة إذا كانت موجودة لتجنب التعارض
-DROP TABLE IF EXISTS doubt_tags CASCADE;
-DROP TABLE IF EXISTS doubts CASCADE;
-DROP TABLE IF EXISTS categories CASCADE;
-DROP TABLE IF EXISTS tags CASCADE;
-DROP TABLE IF EXISTS books CASCADE;
-DROP TABLE IF EXISTS videos CASCADE;
-DROP TABLE IF EXISTS profiles CASCADE;
+-- تحذير مهم:
+-- الأسطر التالية كانت تمسح الجداول (DROP TABLE) بالكامل.
+-- لا تُشغّلها على قاعدة بيانات فيها بيانات إنتاج/تجربة لأن هذا سيحذف كل البيانات.
+-- إذا كنت تريد "تنصيب جديد" على قاعدة فارغة فقط، يمكنك فك التعليق يدويًا.
+-- DROP TABLE IF EXISTS doubt_tags CASCADE;
+-- DROP TABLE IF EXISTS doubts CASCADE;
+-- DROP TABLE IF EXISTS categories CASCADE;
+-- DROP TABLE IF EXISTS tags CASCADE;
+-- DROP TABLE IF EXISTS books CASCADE;
+-- DROP TABLE IF EXISTS videos CASCADE;
+-- DROP TABLE IF EXISTS profiles CASCADE;
 
 -- ==========================================
 -- 1. جدول الملفات الشخصية (Profiles)
@@ -18,6 +21,8 @@ DROP TABLE IF EXISTS profiles CASCADE;
 CREATE TABLE profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin', 'publisher')), -- user = مستخدم عادي, admin/publisher = يستطيع النشر
+  username TEXT,
+  email TEXT,
   display_name_ar TEXT,
   display_name_en TEXT,
   avatar_url TEXT,
@@ -26,12 +31,23 @@ CREATE TABLE profiles (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- منع تكرار اليوزرنيم (غير حساس لحالة الحروف)
+CREATE UNIQUE INDEX IF NOT EXISTS profiles_username_unique
+ON public.profiles (lower(username))
+WHERE username IS NOT NULL;
+
 -- إعداد Trigger لإنشاء ملف شخصي تلقائياً عند تسجيل أي مستخدم جديد
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, display_name_ar, display_name_en)
-  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'full_name');
+  INSERT INTO public.profiles (id, username, email, display_name_ar, display_name_en)
+  VALUES (
+    new.id,
+    new.raw_user_meta_data->>'username',
+    new.email,
+    new.raw_user_meta_data->>'full_name',
+    new.raw_user_meta_data->>'full_name'
+  );
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

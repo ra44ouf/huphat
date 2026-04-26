@@ -58,21 +58,45 @@ export default function RegisterPage() {
                          e.preventDefault();
                          const formData = new FormData(e.currentTarget);
                          const fullName = formData.get('fullName') as string;
+                         const username = (formData.get('username') as string) || '';
                          const email = formData.get('email') as string;
                          const password = formData.get('password') as string;
                          
                          const supabase = createClient();
-                         const { error } = await supabase.auth.signUp({ 
+                         const { data, error } = await supabase.auth.signUp({ 
                              email, 
                              password, 
-                             options: { data: { full_name: fullName } } 
+                             options: { data: { full_name: fullName, username } } 
                          });
                          if (error) {
                              alert(lang === 'ar' ? 'حدث خطأ أثناء التسجيل' : 'Error during registration');
                          } else {
-                             window.location.href = '/dashboard';
+                             // If email confirmation is enabled, Supabase may return no session yet.
+                             // Send the user to their account page (or login) instead of dashboard.
+                             window.location.href = data.session ? '/profile' : '/login';
                          }
                      }}>
+                        <motion.div 
+                            initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.575 }}
+                            className="group"
+                        >
+                            <div className="relative">
+                                <div className={`absolute inset-y-0 ${lang === 'ar' ? 'right-5' : 'left-5'} flex items-center text-white/30 group-focus-within:text-shubuhat-gold transition-colors`}>
+                                    <UserIcon size={20} />
+                                </div>
+                                <input 
+                                    id="username" 
+                                    name="username" 
+                                    type="text" 
+                                    placeholder={lang === 'ar' ? 'اسم المستخدم' : 'Username'}
+                                    required
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
+                                    className={`w-full py-4 rounded-2xl bg-white/5 border border-white/10 focus:border-shubuhat-gold/50 focus:bg-white/10 transition-all font-bold text-white placeholder:text-white/30 outline-none backdrop-blur-md text-right md:text-left ${lang === 'ar' ? 'pr-14 pl-6' : 'pl-14 pr-6 text-left'}`}
+                                />
+                            </div>
+                        </motion.div>
+
                          <motion.div 
                              initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.55 }}
                              className="group"

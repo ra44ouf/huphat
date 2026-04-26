@@ -59,6 +59,7 @@ export function SplashScreen() {
                 alt="Shubuhat Icon"
                 fill
                 priority
+                sizes="(max-width: 768px) 160px, 192px"
                 className="object-cover scale-[1.3] md:scale-[1.35] origin-center" // Adjust scale to crop out remaining white edges if any
               />
             </motion.div>

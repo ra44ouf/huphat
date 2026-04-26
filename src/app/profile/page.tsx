@@ -1,19 +1,35 @@
 "use client";
 
+import { useEffect } from "react";
 import { useApp } from "@/components/providers";
 import { User, Mail, Calendar, ShieldAlert, LogOut } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import { MobileNav } from "@/components/mobile-nav";
 
 export default function ProfilePage() {
-  const { user, profile, loading, lang } = useApp();
-  const supabase = createClient();
+  const { user, profile, loading, lang, logout } = useApp();
   const router = useRouter();
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login");
+    }
+  }, [loading, user, router]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (profile?.role === "admin" || profile?.role === "publisher") {
+      router.replace("/dashboard");
+    }
+  }, [loading, profile?.role, router]);
+
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await logout();
+    router.replace("/");
     router.refresh();
-    router.push('/');
   };
 
   if (loading) {
@@ -25,27 +41,29 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    router.push('/login');
     return null;
   }
 
   return (
-    <div className="min-h-screen bg-shubuhat-green-ghost py-20 px-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-[40px] shadow-2xl overflow-hidden border border-shubuhat-border-lite">
+    <main className="min-h-screen bg-shubuhat-green-ghost flex flex-col">
+      <Navbar />
+
+      <div className="flex-1 py-10 md:py-16 px-4 md:px-6 pb-32 md:pb-10">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-[28px] md:rounded-[40px] shadow-2xl overflow-hidden border border-shubuhat-border-lite">
           {/* Header Decor */}
           <div className="h-32 bg-shubuhat-green relative">
-            <div className="absolute -bottom-12 left-8 w-24 h-24 bg-shubuhat-gold rounded-3xl flex items-center justify-center text-shubuhat-green shadow-xl border-4 border-white">
+            <div className="absolute -bottom-12 left-4 md:left-8 w-24 h-24 bg-shubuhat-gold rounded-3xl flex items-center justify-center text-shubuhat-green shadow-xl border-4 border-white">
               <User size={48} fill="currentColor" />
             </div>
           </div>
 
-          <div className="pt-16 pb-12 px-8">
+          <div className="pt-16 pb-10 px-5 md:px-8">
             <div className="mb-8">
               <h1 className="text-3xl font-black text-shubuhat-green mb-1">
                 {profile?.full_name || (lang === 'ar' ? 'أهلاً بك' : 'Welcome')}
               </h1>
-              <p className="text-shubuhat-text-3 font-bold flex items-center gap-2">
+              <p className="text-shubuhat-text-3 font-bold flex items-center gap-2 break-all">
                 <Mail size={16} /> {user.email}
               </p>
             </div>
@@ -98,6 +116,10 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+
+      <Footer />
+      <MobileNav />
+    </main>
   );
 }

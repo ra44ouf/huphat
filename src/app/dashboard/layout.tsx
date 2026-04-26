@@ -21,13 +21,17 @@ export default async function DashboardLayout({
     return redirect("/login");
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
-  if (profile?.role !== 'admin' && profile?.role !== 'publisher') {
+  if (profileError && profileError.message !== 'JSON object requested, multiple (or no) rows returned') {
+    console.error("Profile fetch error:", profileError);
+  }
+
+  if (!profile || (profile?.role !== 'admin' && profile?.role !== 'publisher')) {
     return (
         <main className="min-h-screen bg-background flex flex-col">
             <Navbar />

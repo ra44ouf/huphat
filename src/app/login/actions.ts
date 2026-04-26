@@ -7,19 +7,42 @@ import { createClient } from '@/utils/supabase/server'
 export async function login(formData: FormData) {
   const supabase = await createClient()
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
   }
 
-  const { error } = await supabase.auth.signInWithPassword(data)
-
-  if (error) {
-    redirect('/login?error=Could not authenticate user')
+  // Validate inputs
+  if (!data.email || !data.password) {
+    throw new Error('Email and password are required')
   }
 
+  const { error, data: authData } = await supabase.auth.signInWithPassword(data)
+
+  if (error) {
+    // Better error messages
+    if (error.message.includes('Invalid login credentials')) {
+      throw new Error('Invalid email or password')
+    }
+    if (error.message.includes('Email not confirmed')) {
+      throw new Error('Please verify your email before logging in')
+    }
+    throw new Error(error.message || 'Authentication failed')
+  }
+
+  if (!authData.session) {
+    throw new Error('No session created')
+  }
+
+  // Verify the session was set correctly
+  const { data: verifyUser } = await supabase.auth.getUser()
+  if (!verifyUser.user) {
+    throw new Error('Session verification failed')
+  }
+
+  // Wait for cookies to be set
+  await new Promise(resolve => setTimeout(resolve, 300))
+  
   revalidatePath('/', 'layout')
   redirect('/dashboard')
 }

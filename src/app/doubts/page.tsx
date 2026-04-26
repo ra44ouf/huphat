@@ -22,7 +22,7 @@ export default function DoubtsPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const q = params.get('q');
+    const q = params.get("q");
     if (q) {
       setSearchQuery(q);
       setSearchInput(q);

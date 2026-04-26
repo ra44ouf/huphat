@@ -42,12 +42,12 @@ export function MobileNav() {
     }
   };
 
-  const navItems = [
+  const getNavItems = () => [
     { href: "/", icon: Home, label: t.home, matchExact: true },
     { href: "/doubts", icon: HelpCircle, label: t.doubts },
     { href: "/books", icon: Book, label: t.books },
     { href: "/videos", icon: Video, label: t.videos },
-    { href: user ? "/profile" : "/login", icon: User, label: lang === 'ar' ? 'حسابي' : 'Account' },
+    { href: user ? "/profile" : "/login", icon: User, label: user ? (lang === 'ar' ? 'حسابي' : 'Account') : t.signIn },
   ];
 
   return (
@@ -79,7 +79,7 @@ export function MobileNav() {
 
       {/* Bottom Navigation Bar */}
       <nav className="md:hidden fixed bottom-6 left-6 right-6 z-50 bg-shubuhat-green-dark/80 backdrop-blur-xl border border-white/10 rounded-full flex justify-between items-center px-2 py-2 shadow-2xl shadow-shubuhat-green/20">
-        {navItems.map((item) => {
+        {getNavItems().map((item) => {
           const isActive = item.matchExact 
             ? pathname === item.href 
             : pathname.startsWith(item.href);

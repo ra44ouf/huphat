@@ -4,16 +4,14 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useApp } from "@/components/providers";
 import { translations } from "@/lib/translations";
-import { Search, LogIn, Menu, Globe, User, LayoutDashboard, LogOut, X } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
+import { LogIn, Menu, Globe, User, LogOut, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 
 export function Navbar() {
-  const { lang, toggleLang, user, profile, loading } = useApp();
+  const { lang, toggleLang, user, profile, loading, logout } = useApp();
   const t = translations[lang].nav;
-  const supabase = createClient();
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -27,18 +25,20 @@ export function Navbar() {
   const isAdmin = profile?.role === 'admin' || profile?.role === 'publisher';
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await logout();
+    router.push('/');
     router.refresh();
   };
 
   return (
-    <nav className="hidden md:flex sticky top-0 z-50 bg-shubuhat-green text-white h-[72px] px-6 items-center shadow-xl border-b border-white/5">
+    <nav className="flex sticky top-0 z-50 bg-shubuhat-green text-white h-[72px] px-4 md:px-6 items-center shadow-xl border-b border-white/5">
       <Link href="/" className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity">
         <div className="relative w-12 h-12 overflow-hidden rounded-xl shadow-lg border border-white/10 bg-white">
           <Image 
             src="/logo.jpg" 
             alt="Shubuhat Logo" 
             fill
+            sizes="48px"
             className="object-cover scale-[1.3] transform-gpu transition-transform group-hover:scale-[1.4]"
           />
         </div>
@@ -55,7 +55,7 @@ export function Navbar() {
         <NavLink href="/videos" active={pathname.startsWith("/videos")}>{t.videos}</NavLink>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4 ml-auto">
         <button 
           onClick={toggleLang}
           className="p-2.5 hover:bg-white/10 rounded-xl transition-all flex items-center gap-1.5 text-[11px] font-black border border-white/10"
@@ -67,7 +67,7 @@ export function Navbar() {
         {loading ? (
           <div className="w-10 h-10 rounded-full bg-white/5 animate-pulse" />
         ) : user ? (
-          <div className="flex items-center gap-2 group relative">
+          <div className="hidden md:flex items-center gap-2 group relative">
               <Link 
                   href={isAdmin ? "/dashboard" : "/profile"} 
                   className="flex items-center gap-2 bg-white/10 hover:bg-white/20 p-1.5 pr-4 rounded-full transition-all border border-white/10 group shadow-inner"
@@ -90,7 +90,7 @@ export function Navbar() {
               </button>
           </div>
         ) : (
-          <Link href="/login" className="flex items-center gap-2 bg-shubuhat-gold text-shubuhat-green px-6 py-2.5 rounded-full text-[13px] font-black hover:bg-shubuhat-gold-light transition-all shadow-xl active:scale-95 uppercase">
+          <Link href="/login" className="hidden md:flex items-center gap-2 bg-shubuhat-gold text-shubuhat-green px-6 py-2.5 rounded-full text-[13px] font-black hover:bg-shubuhat-gold-light transition-all shadow-xl active:scale-95 uppercase">
             <LogIn size={16} />
             {t.signIn}
           </Link>
@@ -101,7 +101,6 @@ export function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div 
@@ -128,6 +127,26 @@ export function Navbar() {
               <MobileNavLink href="/doubts" active={pathname.startsWith("/doubts")} onClick={() => setIsMobileMenuOpen(false)}>{t.doubts}</MobileNavLink>
               <MobileNavLink href="/books" active={pathname.startsWith("/books")} onClick={() => setIsMobileMenuOpen(false)}>{t.books}</MobileNavLink>
               <MobileNavLink href="/videos" active={pathname.startsWith("/videos")} onClick={() => setIsMobileMenuOpen(false)}>{t.videos}</MobileNavLink>
+              {loading ? null : user ? (
+                <>
+                  <MobileNavLink href={isAdmin ? "/dashboard" : "/profile"} active={pathname.startsWith(isAdmin ? "/dashboard" : "/profile")} onClick={() => setIsMobileMenuOpen(false)}>
+                    {lang === "ar" ? (isAdmin ? "لوحة التحكم" : "حسابي") : (isAdmin ? "Dashboard" : "My Account")}
+                  </MobileNavLink>
+                  <button
+                    onClick={async () => {
+                      await handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="px-6 py-4 rounded-2xl transition-all font-black text-lg text-red-200 hover:text-red-100 hover:bg-white/10 text-start"
+                  >
+                    {lang === "ar" ? "تسجيل الخروج" : "Log out"}
+                  </button>
+                </>
+              ) : (
+                <MobileNavLink href="/login" active={pathname.startsWith("/login")} onClick={() => setIsMobileMenuOpen(false)}>
+                  {lang === "ar" ? "تسجيل الدخول" : "Sign in"}
+                </MobileNavLink>
+              )}
             </div>
 
             <div className="mt-8 pt-8 border-t border-white/10">

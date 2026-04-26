@@ -10,10 +10,12 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useApp } from "@/components/providers";
 import { translations } from "@/lib/translations";
-import { createClient } from "@/utils/supabase/client";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const { lang } = useApp();
   const t = translations[lang].auth;
 
@@ -84,16 +86,38 @@ export default function LoginPage() {
 
                      <form className="space-y-5 md:space-y-6" onSubmit={async (e) => {
                          e.preventDefault();
+                         setError(null);
+                         setSuccess(false);
+                         
                          const formData = new FormData(e.currentTarget);
                          const email = formData.get('email') as string;
                          const password = formData.get('password') as string;
                          
-                         const supabase = createClient();
-                         const { error } = await supabase.auth.signInWithPassword({ email, password });
-                         if (error) {
-                             alert(lang === 'ar' ? 'بيانات الدخول غير صحيحة' : 'Invalid login credentials');
-                         } else {
-                             window.location.href = '/dashboard';
+                         // Validation
+                         if (!email || !password) {
+                             setError(lang === 'ar' ? 'جميع الحقول مطلوبة' : 'All fields are required');
+                             return;
+                         }
+                         
+                         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                             setError(lang === 'ar' ? 'البريد الإلكتروني غير صحيح' : 'Invalid email format');
+                             return;
+                         }
+                         
+                         if (password.length < 6) {
+                             setError(lang === 'ar' ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters');
+                             return;
+                         }
+                         
+                         setLoading(true);
+                         try {
+                             await login(formData);
+                             setSuccess(true);
+                             // Don't need to wait, redirect will happen in server
+                         } catch (err: any) {
+                             const errorMessage = err?.message || (lang === 'ar' ? 'خطأ في تسجيل الدخول' : 'Login failed');
+                             setError(errorMessage);
+                             setLoading(false);
                          }
                      }}>
                          <motion.div 
@@ -143,21 +167,45 @@ export default function LoginPage() {
                              </div>
                          </motion.div>
 
-                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className={`flex ${lang === 'ar' ? 'justify-end' : 'justify-end'} px-2`}>
-                             <Link href="#" className="text-[11px] font-black text-white/40 hover:text-white transition-colors hover:underline underline-offset-4 tracking-widest">
-                                 {t.forgotPassword}
-                             </Link>
-                         </motion.div>
+                         {error && (
+                             <motion.div 
+                                 initial={{ opacity: 0, y: -10 }} 
+                                 animate={{ opacity: 1, y: 0 }}
+                                 className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-bold text-center"
+                             >
+                                 {error}
+                             </motion.div>
+                         )}
+
+                         {success && (
+                             <motion.div 
+                                 initial={{ opacity: 0, y: -10 }} 
+                                 animate={{ opacity: 1, y: 0 }}
+                                 className="p-4 rounded-2xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-bold text-center"
+                             >
+                                 {lang === 'ar' ? 'تم تسجيل الدخول بنجاح!' : 'Login successful!'}
+                             </motion.div>
+                         )}
 
                          <motion.button 
                              initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.9 }}
-                             whileHover={{ scale: 1.02 }}
-                             whileTap={{ scale: 0.98 }}
+                             whileHover={!loading ? { scale: 1.02 } : {}}
+                             whileTap={!loading ? { scale: 0.98 } : {}}
                              type="submit"
-                             className="w-full bg-shubuhat-gold text-shubuhat-green py-4 md:py-5 rounded-2xl font-black text-sm transition-all shadow-[0_0_20px_rgba(201,165,108,0.2)] hover:shadow-[0_0_30px_rgba(201,165,108,0.4)] mt-2 md:mt-4 flex items-center justify-center gap-2 tracking-widest"
+                             disabled={loading}
+                             className="w-full bg-shubuhat-gold text-shubuhat-green py-4 md:py-5 rounded-2xl font-black text-sm transition-all shadow-[0_0_20px_rgba(201,165,108,0.2)] hover:shadow-[0_0_30px_rgba(201,165,108,0.4)] mt-6 md:mt-8 flex items-center justify-center gap-2 tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                          >
-                             {t.loginBtn}
-                             {lang === 'ar' ? <ArrowLeft size={18} className="translate-y-[1px]" /> : <ArrowRight size={18} className="translate-y-[1px]" />}
+                             {loading ? (
+                                 <>
+                                     <div className="w-4 h-4 border-2 border-shubuhat-green border-t-transparent rounded-full animate-spin" />
+                                     {lang === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+                                 </>
+                             ) : (
+                                 <>
+                                     {t.loginBtn}
+                                     {lang === 'ar' ? <ArrowLeft size={18} className="translate-y-[1px]" /> : <ArrowRight size={18} className="translate-y-[1px]" />}
+                                 </>
+                             )}
                          </motion.button>
                      </form>
                  </motion.div>
