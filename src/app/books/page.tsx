@@ -76,44 +76,68 @@ export default function BooksPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 {[1,2,3,4].map(i => <div key={i} className="aspect-[3/4] bg-shubuhat-green-ghost rounded-[40px] animate-pulse" />)}
             </div>
-        ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-                {books.filter(b => (b.title_ar?.includes(searchQuery) || b.title_en?.toLowerCase().includes(searchQuery.toLowerCase()))).map((book) => (
-                    <div key={book.id} className="group flex flex-col">
-                        <div className="relative aspect-[3/4] rounded-[40px] overflow-hidden shadow-xl border border-shubuhat-border-lite mb-6 group-hover:shadow-2xl transition-all duration-500">
-                             <Image src={book.cover_url || '/logo.jpg'} fill className="object-cover group-hover:scale-110 transition-transform duration-700" alt={book.title_ar} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
-                             <div className="absolute inset-0 bg-gradient-to-t from-shubuhat-green via-transparent to-transparent opacity-60" />
-                             <div className="absolute bottom-6 left-6 right-6">
-                                <a 
-                                    href={book.download_url} 
-                                    target="_blank"
-                                    className="w-full bg-shubuhat-gold text-shubuhat-green py-3 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-white transition-all shadow-lg active:scale-95"
-                                >
-                                    <Download size={18} />
-                                    {lang === 'ar' ? 'تحميل الكتاب' : 'Download'}
-                                </a>
-                             </div>
-                        </div>
-                        <div className="px-2">
-                             <div className="text-[10px] font-black text-shubuhat-gold uppercase tracking-[0.2em] mb-2">
-                                {lang === 'ar' ? 'بواسطة: ' : 'By: '}
-                                {lang === 'ar' ? book.book_author_ar : book.book_author_en}
-                             </div>
-                             <h3 className="text-xl font-black text-shubuhat-green mb-2 group-hover:text-shubuhat-gold transition-colors leading-tight">
-                                {lang === 'ar' ? book.title_ar : book.title_en}
-                             </h3>
-                             <div className="flex items-center gap-2 mt-4 text-[11px] font-bold text-shubuhat-text-3">
-                                <div className="w-6 h-6 rounded-full bg-shubuhat-green-ghost flex items-center justify-center text-shubuhat-green font-black text-[10px]">
-                                    {book.profiles?.display_name_ar?.[0] || 'A'}
-                                </div>
-                                <span>{lang === 'ar' ? book.profiles?.display_name_ar : book.profiles?.display_name_en}</span>
-                                {book.profiles?.is_verified && <span className="text-blue-500">✔</span>}
-                             </div>
-                        </div>
-                    </div>
-                ))}
+        ) : books.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-24 h-24 bg-shubuhat-green-ghost rounded-full flex items-center justify-center mb-6 text-shubuhat-green/20">
+                    <BookIcon size={48} />
+                </div>
+                <h3 className="text-2xl font-black text-shubuhat-green/40 mb-2">
+                    {lang === 'ar' ? 'المكتبة فارغة حالياً' : 'Library is empty'}
+                </h3>
+                <p className="text-shubuhat-text-3 font-bold">
+                    {lang === 'ar' ? 'انتظرونا، سيتم إضافة كتب قيمة قريباً' : 'Valuable books will be added soon'}
+                </p>
             </div>
-        )}
+        ) : (() => {
+            const filtered = books.filter(b => (b.title_ar?.includes(searchQuery) || b.title_en?.toLowerCase().includes(searchQuery.toLowerCase())));
+            if (filtered.length === 0) {
+                return (
+                    <div className="py-20 text-center">
+                        <h3 className="text-xl font-black text-shubuhat-text-3">
+                            {lang === 'ar' ? 'لم نجد كتباً تطابق بحثك' : 'No books found for your search'}
+                        </h3>
+                    </div>
+                );
+            }
+            return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+                    {filtered.map((book) => (
+                        <div key={book.id} className="group flex flex-col">
+                            <div className="relative aspect-[3/4] rounded-[40px] overflow-hidden shadow-xl border border-shubuhat-border-lite mb-6 group-hover:shadow-2xl transition-all duration-500">
+                                <Image src={book.cover_url || '/logo.jpg'} fill className="object-cover group-hover:scale-110 transition-transform duration-700" alt={book.title_ar} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-shubuhat-green via-transparent to-transparent opacity-60" />
+                                <div className="absolute bottom-6 left-6 right-6">
+                                    <a 
+                                        href={book.download_url} 
+                                        target="_blank"
+                                        className="w-full bg-shubuhat-gold text-shubuhat-green py-3 rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-white transition-all shadow-lg active:scale-95"
+                                    >
+                                        <Download size={18} />
+                                        {lang === 'ar' ? 'تحميل الكتاب' : 'Download'}
+                                    </a>
+                                </div>
+                            </div>
+                            <div className="px-2">
+                                <div className="text-[10px] font-black text-shubuhat-gold uppercase tracking-[0.2em] mb-2">
+                                    {lang === 'ar' ? 'بواسطة: ' : 'By: '}
+                                    {lang === 'ar' ? book.book_author_ar : book.book_author_en}
+                                </div>
+                                <h3 className="text-xl font-black text-shubuhat-green mb-2 group-hover:text-shubuhat-gold transition-colors leading-tight">
+                                    {lang === 'ar' ? book.title_ar : book.title_en}
+                                </h3>
+                                <div className="flex items-center gap-2 mt-4 text-[11px] font-bold text-shubuhat-text-3">
+                                    <div className="w-6 h-6 rounded-full bg-shubuhat-green-ghost flex items-center justify-center text-shubuhat-green font-black text-[10px]">
+                                        {book.profiles?.display_name_ar?.[0] || 'A'}
+                                    </div>
+                                    <span>{lang === 'ar' ? book.profiles?.display_name_ar : book.profiles?.display_name_en}</span>
+                                    {book.profiles?.is_verified && <span className="text-blue-500">✔</span>}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        })()}
       </section>
 
       <Footer />

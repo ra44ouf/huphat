@@ -48,14 +48,14 @@ export default function VideosDashboard() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) { alert('يجب تسجيل الدخول أولاً'); return; }
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
 
     const { error } = await supabase
       .from('videos')
       .insert({
         ...formData,
-        author_id: user?.id
+        author_id: user.id
       });
 
     if (error) {

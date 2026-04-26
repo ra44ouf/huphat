@@ -53,15 +53,15 @@ export default function BooksDashboard() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) { alert('يجب تسجيل الدخول أولاً'); return; }
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
 
     const { error } = await supabase
       .from('books')
       .insert({
         ...formData,
         pages_count: formData.pages_count ? parseInt(formData.pages_count) : null,
-        author_id: user?.id
+        author_id: user.id
       });
 
     if (error) {

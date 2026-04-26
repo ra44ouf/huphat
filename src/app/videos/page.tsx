@@ -77,9 +77,29 @@ export default function VideosPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {[1,2,3,4,5,6].map(i => <div key={i} className="aspect-video bg-white/5 rounded-3xl animate-pulse" />)}
             </div>
-        ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-                {videos.filter(v => (v.title_ar?.includes(searchQuery) || v.title_en?.toLowerCase().includes(searchQuery.toLowerCase()))).map((video) => (
+        ) : videos.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-32 text-center">
+                <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-6 text-white/20">
+                    <VideoIcon size={48} />
+                </div>
+                <h3 className="text-2xl font-black text-white/50 mb-2">
+                    {lang === 'ar' ? 'لا توجد فيديوهات حالياً' : 'No videos yet'}
+                </h3>
+                <p className="text-white/30 font-bold">
+                    {lang === 'ar' ? 'سيتم إضافة محتوى قريباً' : 'Content will be added soon'}
+                </p>
+            </div>
+        ) : (() => {
+            const filtered = videos.filter(v => (v.title_ar?.includes(searchQuery) || v.title_en?.toLowerCase().includes(searchQuery.toLowerCase())));
+            return filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-32 text-center">
+                    <h3 className="text-xl font-black text-white/40">
+                        {lang === 'ar' ? 'لا توجد نتائج للبحث' : 'No search results'}
+                    </h3>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+                    {filtered.map((video) => (
                     <div key={video.id} className="group cursor-pointer flex flex-col">
                         <div className="relative aspect-video rounded-[32px] overflow-hidden border border-white/10 mb-5 group-hover:border-shubuhat-gold/50 transition-all duration-500 shadow-2xl">
                              {getYoutubeId(video.youtube_url) ? (
@@ -124,8 +144,10 @@ export default function VideosPage() {
                         </div>
                     </div>
                 ))}
-            </div>
-        )}
+                </div>
+            );
+        })()}
+        
       </section>
 
       <Footer />

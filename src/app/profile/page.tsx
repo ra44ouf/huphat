@@ -20,11 +20,14 @@ export default function ProfilePage() {
   }, [loading, user, router]);
 
   useEffect(() => {
+    // Wait until both auth and profile are loaded before redirecting admin
     if (loading) return;
-    if (profile?.role === "admin" || profile?.role === "publisher") {
+    if (!user) return;  // handled by the effect above
+    // Only redirect if profile is confirmed loaded (not null while fetching)
+    if (profile !== null && (profile?.role === "admin" || profile?.role === "publisher")) {
       router.replace("/dashboard");
     }
-  }, [loading, profile?.role, router]);
+  }, [loading, user, profile, router]);
 
   const handleLogout = async () => {
     await logout();
@@ -32,7 +35,8 @@ export default function ProfilePage() {
     router.refresh();
   };
 
-  if (loading) {
+  // Show spinner while auth or profile is loading
+  if (loading || (user && profile === null)) {
     return (
       <div className="min-h-screen bg-shubuhat-green-ghost flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-shubuhat-gold border-t-transparent rounded-full animate-spin" />
