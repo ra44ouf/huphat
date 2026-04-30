@@ -128,7 +128,9 @@ export default function VideosDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  // user?.id (string) بدل user (object) — يمنع إعادة إنشاء الـ callback لما يتغير reference الـ user بعد كل token refresh
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   // ──────────────────────────────────────────────────────
   // Fetch saved channels via backend API
@@ -149,7 +151,9 @@ export default function VideosDashboard() {
   useEffect(() => {
     if (user) fetchVideos();
     else if (!authLoading) setLoading(false);
-  }, [user, authLoading, fetchVideos]);
+  // fetchVideos خارج الـ deps لأن user?.id يضمن استقراره — لا نريد loop لما يتغير object الـ user
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, authLoading]);
 
   useEffect(() => {
     if (showSyncPanel && user) fetchChannels();

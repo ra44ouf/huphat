@@ -142,6 +142,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     if (!mounted) return;
 
     const onFocus = () => {
+      // visibilitychange يطلق على hide وshow — نريد فقط لما يرجع التاب visible
+      if (document.visibilityState === "hidden") return;
       if (Date.now() - authFetchLastAtRef.current < 1500) return;
       fetchAuth();
     };
