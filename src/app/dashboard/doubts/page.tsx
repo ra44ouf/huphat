@@ -54,7 +54,8 @@ export default function DoubtsDashboard() {
         else if (!authLoading) setLoading(false);
     }
     init();
-  }, [user, authLoading]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, authLoading]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();

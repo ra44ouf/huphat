@@ -1,9 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { User, AuthChangeEvent, Session } from "@supabase/supabase-js";
-
 
 type Language = "ar" | "en";
 
@@ -25,148 +24,149 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const authSubRef = useRef<{ id: string; unsubscribe: () => void } | null>(null);
-  const authFetchInFlightRef = useRef(false);
-  const authFetchQueuedRef = useRef(false);
-  const authFetchLastAtRef = useRef(0);
 
-  
+  // ── Refs (لا تسبب re-render) ──────────────────────────────
+  const authSubRef       = useRef<{ unsubscribe: () => void } | null>(null);
+  const inFlightRef      = useRef(false);
+  const queuedRef        = useRef(false);
+  const lastFetchRef     = useRef(0);
+  // 🔑 المفتاح: نحفظ الـ ID الحالي بدل مقارنة الـ object كاملاً
+  const currentUserIdRef = useRef<string | null>(null);
+
   const supabase = createClient();
 
-  const logout = async () => {
-    try {
-      await supabase.auth.signOut();
-      setUser(null);
-      setProfile(null);
-      setLoading(false);
-    } catch (error) {
-      console.error("Logout error:", error);
-      setUser(null);
-      setProfile(null);
-      setLoading(false);
-    }
-  };
+  // ── Logout ───────────────────────────────────────────────
+  const logout = useCallback(async () => {
+    try { await supabase.auth.signOut(); } catch (e) { console.error(e); }
+    currentUserIdRef.current = null;
+    setUser(null);
+    setProfile(null);
+    setLoading(false);
+  }, []);
 
-  const fetchAuth = async (forceProfileFetch = false) => {
-    if (authFetchInFlightRef.current) {
-      authFetchQueuedRef.current = true;
-      return;
-    }
+  // ── Core auth fetch ──────────────────────────────────────
+  const fetchAuth = useCallback(async (forceProfile = false) => {
+    if (inFlightRef.current) { queuedRef.current = true; return; }
+
+    inFlightRef.current = true;
+    queuedRef.current   = false;
+    lastFetchRef.current = Date.now();
 
     try {
-      authFetchInFlightRef.current = true;
-      authFetchQueuedRef.current = false;
-      authFetchLastAtRef.current = Date.now();
+      const { data: { user: freshUser }, error } = await supabase.auth.getUser();
 
-      const { data: { user: currentUser }, error: sessionError } = await supabase.auth.getUser();
-      
-      if (sessionError && sessionError.message !== 'Auth session missing!') {
-        console.error("Auth getUser error:", sessionError);
+      if (error && error.message !== "Auth session missing!") {
+        console.error("Auth error:", error);
       }
-      setUser(currentUser);
 
-      if (currentUser && (forceProfileFetch || !profile)) {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', currentUser.id)
+      const newId = freshUser?.id ?? null;
+
+      // ✅ الإصلاح الجوهري: لا تحدّث state إذا نفس المستخدم
+      if (newId !== currentUserIdRef.current) {
+        currentUserIdRef.current = newId;
+        setUser(freshUser);
+
+        if (!freshUser) {
+          setProfile(null);
+        } else {
+          // مستخدم جديد → جلب profile
+          const { data } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", freshUser.id)
             .maybeSingle();
-          
-          if (error) {
-             console.error("Profile fetch error:", error);
-             setProfile({ full_name: currentUser.user_metadata?.full_name || currentUser.email });
-          } else {
-             setProfile(data ?? { full_name: currentUser.user_metadata?.full_name || currentUser.email });
-          }
-        } catch (err) {
-          console.error("Profile fetch catastrophic error:", err);
-          setProfile({ full_name: currentUser.user_metadata?.full_name || currentUser.email });
+          setProfile(data ?? { full_name: freshUser.user_metadata?.full_name || freshUser.email });
         }
-      } else if (!currentUser) {
-        setProfile(null);
+      } else if (freshUser && forceProfile) {
+        // نفس المستخدم لكن طُلب تحديث profile صراحةً
+        const { data } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", freshUser.id)
+          .maybeSingle();
+        if (data) setProfile(data);
       }
     } catch (err) {
-      console.error("Auth fetch catastrophic error:", err);
+      console.error("fetchAuth error:", err);
     } finally {
       setLoading(false);
-      authFetchInFlightRef.current = false;
-      if (authFetchQueuedRef.current) {
-        fetchAuth(forceProfileFetch);
-      }
+      inFlightRef.current = false;
+      if (queuedRef.current) fetchAuth(forceProfile);
     }
-  };
+  }, []);
 
+  // ── التهيئة الأولى + Auth subscription ──────────────────
   useEffect(() => {
     setMounted(true);
     fetchAuth();
 
-    if (authSubRef.current) {
-      return () => {};
-    }
+    if (authSubRef.current) return;
 
-    const subId = `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-        console.log("Auth state change event:", event, "User ID:", session?.user?.id);
-        
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event: AuthChangeEvent, session: Session | null) => {
+
+        // ✅ تجاهل TOKEN_REFRESHED تماماً — هو فقط تجديد token، لا يعني تغيير مستخدم
+        // الـ supabase client يحدّث الـ token داخلياً بدون تدخلنا
+        if (event === "TOKEN_REFRESHED") return;
+
+        const freshUser = session?.user ?? null;
+        const newId     = freshUser?.id ?? null;
+
+        // ✅ نفس المستخدم = لا تغيير في state = لا re-render في الصفحات
+        if (newId === currentUserIdRef.current) return;
+
+        currentUserIdRef.current = newId;
+        setUser(freshUser);
         setLoading(false);
-        
-        if (currentUser) {
-            try {
-              const { data, error } = await supabase.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
-              if (!error && data) {
-                  setProfile(data);
-              } else {
-                  setProfile({ full_name: currentUser.user_metadata?.full_name || currentUser.email });
-              }
-            } catch (err) {
-              console.error("Profile fetch error:", err);
-              setProfile({ full_name: currentUser.user_metadata?.full_name || currentUser.email });
-            }
+
+        if (freshUser) {
+          try {
+            const { data } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", freshUser.id)
+              .maybeSingle();
+            setProfile(data ?? { full_name: freshUser.user_metadata?.full_name || freshUser.email });
+          } catch { /* silent */ }
         } else {
-            setProfile(null);
+          setProfile(null);
         }
-    });
+      }
+    );
 
-    authSubRef.current = { id: subId, unsubscribe: () => subscription.unsubscribe() };
-
+    authSubRef.current = { unsubscribe: () => subscription.unsubscribe() };
     return () => {
       authSubRef.current?.unsubscribe();
       authSubRef.current = null;
     };
   }, []);
 
+  // ── Focus / Visibility refresh ───────────────────────────
   useEffect(() => {
     if (!mounted) return;
 
-    const onFocus = () => {
-      // visibilitychange يطلق على hide وshow — نريد فقط لما يرجع التاب visible
+    const onVisible = () => {
       if (document.visibilityState === "hidden") return;
-      if (Date.now() - authFetchLastAtRef.current < 1500) return;
+      if (Date.now() - lastFetchRef.current < 5 * 60 * 1000) return; // throttle: 5 دقائق
       fetchAuth();
     };
 
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
-
+    window.addEventListener("focus", onVisible);
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
+      window.removeEventListener("focus", onVisible);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [mounted]);
 
-
-
+  // ── Lang direction ───────────────────────────────────────
   useEffect(() => {
-    if (mounted) {
-      document.documentElement.lang = lang;
-      document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-    }
+    if (!mounted) return;
+    document.documentElement.lang = lang;
+    document.documentElement.dir  = lang === "ar" ? "rtl" : "ltr";
   }, [lang, mounted]);
 
-  const toggleLang = () => setLang((prev) => (prev === "ar" ? "en" : "ar"));
+  const toggleLang = () => setLang((p) => (p === "ar" ? "en" : "ar"));
 
   return (
     <AppContext.Provider value={{ lang, toggleLang, user, profile, loading, refreshAuth: fetchAuth, logout }}>
@@ -176,7 +176,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 
 export function useApp() {
-  const context = useContext(AppContext);
-  if (!context) throw new Error("useApp must be used within Providers");
-  return context;
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error("useApp must be used within Providers");
+  return ctx;
 }
