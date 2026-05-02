@@ -282,8 +282,12 @@ function AyahAudio({ globalNum, edition, onClose }: {
 // ═══════════════════════════════════════════════════════════
 // Tafsir Panel
 // ═══════════════════════════════════════════════════════════
-function TafsirPanel({ surahName, ayah, tafsirEdition, onClose }: {
-  surahName: string; ayah: Ayah; tafsirEdition: string; onClose: () => void;
+function TafsirPanel({ surahName, ayah, tafsirEdition, activeWordIdx, onClose }: {
+  surahName: string;
+  ayah: Ayah;
+  tafsirEdition: string;
+  activeWordIdx: number | null;
+  onClose: () => void;
 }) {
   const [text, setText]     = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -317,13 +321,27 @@ function TafsirPanel({ surahName, ayah, tafsirEdition, onClose }: {
           </button>
         </div>
 
+        {/* الآية مع highlighting */}
         <div className="px-6 py-4 bg-shubuhat-green-ghost border-b border-shubuhat-border-lite shrink-0">
           <p className="font-black text-shubuhat-green text-xl leading-[2.8] text-center" dir="rtl">
-            {ayah.text}
+            {ayah.words.map((word, idx) => {
+              const isActive = activeWordIdx === idx;
+              return (
+                <span
+                  key={idx}
+                  className={`inline transition-colors duration-150 mx-[2px] rounded-md px-[2px]
+                    ${isActive ? "text-shubuhat-gold bg-shubuhat-gold/10" : ""}`}
+                >
+                  {word}{" "}
+                </span>
+              );
+            })}
+            <span className="text-shubuhat-gold text-base mx-1">﴿{ayah.numberInSurah}﴾</span>
           </p>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        {/* التفسير مع padding كبير تحت لتجنب الـ bottom bar */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 pb-32">
           {loading
             ? <div className="flex items-center justify-center py-16"><Loader size={32} className="animate-spin text-shubuhat-gold" /></div>
             : error
@@ -432,8 +450,13 @@ function AyahRow({ ayah, surahName, reciter, tafsirEdition, activeWordIdx }: {
       </div>
 
       {showTafsir && (
-        <TafsirPanel surahName={surahName} ayah={ayah}
-          tafsirEdition={tafsirEdition} onClose={() => setShowTafsir(false)} />
+        <TafsirPanel
+          surahName={surahName}
+          ayah={ayah}
+          tafsirEdition={tafsirEdition}
+          activeWordIdx={activeWordIdx}
+          onClose={() => setShowTafsir(false)}
+        />
       )}
     </>
   );
@@ -442,13 +465,16 @@ function AyahRow({ ayah, surahName, reciter, tafsirEdition, activeWordIdx }: {
 // ═══════════════════════════════════════════════════════════
 // SurahViewer
 // ═══════════════════════════════════════════════════════════
-function SurahViewer({ surah, reciter, tafsirEdition, onBack }: {
-  surah: Surah; reciter: string; tafsirEdition: string; onBack: () => void;
+function SurahViewer({ surah, reciter, tafsirEdition, onBack, onNavigate }: {
+  surah: Surah;
+  reciter: string;
+  tafsirEdition: string;
+  onBack: () => void;
+  onNavigate: (direction: 'prev' | 'next') => void;
 }) {
   const [ayahs, setAyahs]     = useState<Ayah[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(false);
-  // activeHighlight: { ayahNumInSurah, wordIdx }
   const [active, setActive]   = useState<{ ayah: number; word: number } | null>(null);
 
   useEffect(() => {
@@ -475,15 +501,18 @@ function SurahViewer({ surah, reciter, tafsirEdition, onBack }: {
   const clearActive = useCallback(() => setActive(null), []);
 
   const hasBismillah = surah.number !== 1 && surah.number !== 9;
+  const hasPrev = surah.number > 1;
+  const hasNext = surah.number < 114;
 
   return (
     <div dir="rtl">
-      {/* ── Back + header ── */}
-      <div className="flex items-start gap-4 mb-6">
+      {/* ── Header with navigation ── */}
+      <div className="flex items-start gap-3 mb-6">
         <button onClick={onBack}
           className="mt-1 w-10 h-10 rounded-2xl bg-shubuhat-green-ghost text-shubuhat-green flex items-center justify-center hover:bg-shubuhat-green hover:text-shubuhat-gold transition-all shrink-0">
           <ArrowLeft size={18} className="rotate-180" />
         </button>
+
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap">
             <h2 className="text-3xl md:text-4xl font-black text-shubuhat-green">سورة {surah.name}</h2>
@@ -495,6 +524,24 @@ function SurahViewer({ surah, reciter, tafsirEdition, onBack }: {
             </span>
           </div>
           <p className="text-shubuhat-text-3 font-bold mt-1">{surah.englishName} · {surah.englishNameTranslation}</p>
+        </div>
+
+        {/* Navigation arrows */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => onNavigate('prev')}
+            disabled={!hasPrev}
+            title="السورة السابقة"
+            className="w-10 h-10 rounded-2xl bg-shubuhat-green-ghost text-shubuhat-green flex items-center justify-center hover:bg-shubuhat-green hover:text-shubuhat-gold transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-shubuhat-green-ghost disabled:hover:text-shubuhat-green">
+            <ChevronDown size={18} className="rotate-90" />
+          </button>
+          <button
+            onClick={() => onNavigate('next')}
+            disabled={!hasNext}
+            title="السورة التالية"
+            className="w-10 h-10 rounded-2xl bg-shubuhat-green-ghost text-shubuhat-green flex items-center justify-center hover:bg-shubuhat-green hover:text-shubuhat-gold transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-shubuhat-green-ghost disabled:hover:text-shubuhat-green">
+            <ChevronDown size={18} className="-rotate-90" />
+          </button>
         </div>
       </div>
 
@@ -607,6 +654,17 @@ export function QuranSection() {
     setTimeout(() => topRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   }, []);
 
+  const navigateSurah = useCallback((direction: 'prev' | 'next') => {
+    if (!selectedSurah) return;
+    const newNum = direction === 'prev' ? selectedSurah.number - 1 : selectedSurah.number + 1;
+    if (newNum < 1 || newNum > 114) return;
+    const newSurah = surahs.find((s) => s.number === newNum);
+    if (newSurah) {
+      setSelectedSurah(newSurah);
+      setTimeout(() => topRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+    }
+  }, [selectedSurah, surahs]);
+
   const filtered = useMemo(() =>
     surahs.filter((s) =>
       s.name.includes(search) ||
@@ -653,9 +711,15 @@ export function QuranSection() {
         </div>
       )}
 
-      {/* Content */}
+      {/* ── Content ─────────────────────────────────────── */}
       {selectedSurah ? (
-        <SurahViewer surah={selectedSurah} reciter={reciter} tafsirEdition={tafsirEdition} onBack={goBack} />
+        <SurahViewer
+          surah={selectedSurah}
+          reciter={reciter}
+          tafsirEdition={tafsirEdition}
+          onBack={goBack}
+          onNavigate={navigateSurah}
+        />
       ) : surahsLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {Array.from({ length: 20 }).map((_, i) => (
