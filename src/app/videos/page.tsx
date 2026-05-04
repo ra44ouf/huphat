@@ -35,7 +35,7 @@ export default function VideosPage() {
             
             // Extract unique channels (admins)
             const uniqueProfilesMap = new Map();
-            data.forEach(v => {
+            data.forEach((v: any) => {
               if (v.profiles && v.author_id) {
                  if (!uniqueProfilesMap.has(v.author_id)) {
                      uniqueProfilesMap.set(v.author_id, { id: v.author_id, ...v.profiles });
@@ -61,13 +61,13 @@ export default function VideosPage() {
     return (match && match[2].length === 11) ? match[2] : null;
   }
 
-  const filteredChannels = channels.filter(c => 
+  const filteredChannels = channels.filter((c: any) => 
     searchQuery === "" || 
     c.display_name_ar?.includes(searchQuery) || 
     (c.display_name_en && c.display_name_en.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const filteredVideos = videos.filter(v => {
+  const filteredVideos = videos.filter((v: any) => {
     const matchesChannel = selectedChannelId ? v.author_id === selectedChannelId : true;
     const matchesSearch = searchQuery === "" || 
         v.title_ar?.includes(searchQuery) || 
