@@ -34,7 +34,7 @@ export default function VideosPage() {
               *,
               profiles (display_name_ar, display_name_en, is_verified)
             `)
-            .order('created_at', { ascending: false })
+            .order('publish_date', { ascending: false })
             .range(from, from + step - 1);
           
           if (error) {

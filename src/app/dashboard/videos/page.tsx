@@ -122,7 +122,7 @@ export default function VideosDashboard() {
         .from("videos")
         .select("*")
         .eq("author_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("publish_date", { ascending: false });
 
       if (data) setVideos(data as VideoRow[]);
     } finally {
@@ -170,6 +170,7 @@ export default function VideosDashboard() {
     const { error } = await supabase.from("videos").insert({
       ...formData,
       author_id: user.id,
+      publish_date: new Date().toISOString(),
     });
 
     if (error) {
