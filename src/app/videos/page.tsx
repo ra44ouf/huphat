@@ -22,20 +22,42 @@ export default function VideosPage() {
     async function fetchVideos() {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('videos')
-          .select(`
-            *,
-            profiles (display_name_ar, display_name_en, is_verified)
-          `)
-          .order('created_at', { ascending: false });
+        let allVideos: any[] = [];
+        let from = 0;
+        const step = 1000;
+        let hasMore = true;
+
+        while (hasMore) {
+          const { data, error } = await supabase
+            .from('videos')
+            .select(`
+              *,
+              profiles (display_name_ar, display_name_en, is_verified)
+            `)
+            .order('created_at', { ascending: false })
+            .range(from, from + step - 1);
+          
+          if (error) {
+             console.error("Videos error:", error);
+             break;
+          }
+
+          if (data && data.length > 0) {
+             allVideos = [...allVideos, ...data];
+             if (data.length < step) {
+                hasMore = false;
+             } else {
+                from += step;
+             }
+          } else {
+             hasMore = false;
+          }
+        }
         
-        if (data) {
-            setVideos(data);
-            
+        if (allVideos.length > 0) {
             // Extract unique channels (admins)
             const uniqueProfilesMap = new Map();
-            data.forEach((v: any) => {
+            allVideos.forEach(v => {
               if (v.profiles && v.author_id) {
                  if (!uniqueProfilesMap.has(v.author_id)) {
                      uniqueProfilesMap.set(v.author_id, { id: v.author_id, ...v.profiles });
@@ -43,8 +65,32 @@ export default function VideosPage() {
               }
             });
             setChannels(Array.from(uniqueProfilesMap.values()));
+
+            // خوارزمية التوزيع العادل (Round-Robin) لدمج الفيديوهات من كل القنوات
+            const groupedVideos = new Map();
+            allVideos.forEach(v => {
+                if (!groupedVideos.has(v.author_id)) {
+                    groupedVideos.set(v.author_id, []);
+                }
+                groupedVideos.get(v.author_id).push(v);
+            });
+
+            const mixedVideos: any[] = [];
+            let added = true;
+            let index = 0;
+            while (added) {
+                added = false;
+                for (const [authorId, vids] of groupedVideos.entries()) {
+                    if (index < vids.length) {
+                        mixedVideos.push(vids[index]);
+                        added = true;
+                    }
+                }
+                index++;
+            }
+
+            setVideos(mixedVideos);
         }
-        if (error) console.error("Videos error:", error);
       } catch(err) {
         console.error("Failed to load videos:", err);
       } finally {
