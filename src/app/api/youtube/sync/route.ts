@@ -104,6 +104,17 @@ interface VideoItem {
   description_en: string;
 }
 
+// تنظيف النصوص من جميع الرموز غير المقبولة في PostgreSQL JSON
+function sanitizeForPg(str: string): string {
+  if (!str) return '';
+  // Remove null bytes and other non-printable control characters
+  // PostgreSQL JSON rejects: U+0000 and also lone surrogates
+  return str
+    .replace(/\u0000/g, '')                    // null bytes
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '') // other control chars except \t \n \r
+    .replace(/\uD800[\uDC00-\uDFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, ''); // lone surrogates
+}
+
 async function fetchAllPlaylistVideos(uploadsPlaylistId: string): Promise<VideoItem[]> {
   const videos: VideoItem[] = [];
   let pageToken: string | undefined;
@@ -133,19 +144,19 @@ async function fetchAllPlaylistVideos(uploadsPlaylistId: string): Promise<VideoI
         item.snippet?.thumbnails?.high?.url ||
         `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 
-      // Remove null bytes that cause PostgreSQL JSON parser to crash
-      const title: string = (item.snippet?.title || '').replace(/\0/g, '');
-      const description: string = (item.snippet?.description || '').replace(/\0/g, '');
+      // تنظيف شامل لكل الحقول النصية قبل الإدراج في قاعدة البيانات
+      const title: string = sanitizeForPg(item.snippet?.title || '');
+      const description: string = sanitizeForPg(item.snippet?.description || '').slice(0, 500);
 
       videos.push({
-        youtube_video_id: videoId,
+        youtube_video_id: sanitizeForPg(videoId),
         title_ar: title,
         title_en: title,
         youtube_url: `https://www.youtube.com/watch?v=${videoId}`,
-        thumbnail_url: thumb,
+        thumbnail_url: sanitizeForPg(thumb),
         publish_date: item.snippet?.publishedAt || new Date().toISOString(),
-        description_ar: description.slice(0, 500),
-        description_en: description.slice(0, 500),
+        description_ar: description,
+        description_en: description,
       });
     }
 
@@ -257,18 +268,41 @@ export async function POST(req: NextRequest) {
 
     const newVideos = fetchedVideos.filter((v) => !existingIds.has(v.youtube_video_id));
 
-    // ── إدراج الفيديوهات الجديدة فقط ──
-    if (newVideos.length > 0) {
-      const { error: insertError } = await supabase.from('videos').insert(
-        newVideos.map((v) => ({ ...v, author_id: user.id }))
-      );
+    // ── إدراج الفيديوهات على دفعات (50 في كل مرة) لعزل الأخطاء ──
+    const BATCH_SIZE = 50;
+    let totalAdded = 0;
+    const batchErrors: string[] = [];
 
-      if (insertError) {
-        console.error('Insert error:', insertError);
-        return NextResponse.json(
-          { error: 'فشل حفظ الفيديوهات: ' + insertError.message },
-          { status: 500 }
-        );
+    for (let i = 0; i < newVideos.length; i += BATCH_SIZE) {
+      const batch = newVideos.slice(i, i + BATCH_SIZE).map((v) => ({
+        ...v,
+        author_id: user.id,
+        // تنظيف إضافي للتأكد من خلو الدفعة من أي رموز مشكلة
+        title_ar: sanitizeForPg(v.title_ar),
+        title_en: sanitizeForPg(v.title_en),
+        description_ar: sanitizeForPg(v.description_ar),
+        description_en: sanitizeForPg(v.description_en),
+        youtube_url: sanitizeForPg(v.youtube_url),
+        thumbnail_url: sanitizeForPg(v.thumbnail_url),
+        youtube_video_id: sanitizeForPg(v.youtube_video_id),
+      }));
+
+      const { error: batchError } = await supabase.from('videos').insert(batch);
+
+      if (batchError) {
+        console.error(`Batch ${i / BATCH_SIZE + 1} insert error:`, batchError.message);
+        batchErrors.push(batchError.message);
+        // نحاول إدراج كل فيديو بشكل منفرد لعزل الفيديو المشكل
+        for (const video of batch) {
+          const { error: singleError } = await supabase.from('videos').insert(video);
+          if (!singleError) {
+            totalAdded++;
+          } else {
+            console.error(`Single video insert failed (${video.youtube_video_id}):`, singleError.message);
+          }
+        }
+      } else {
+        totalAdded += batch.length;
       }
     }
 
@@ -280,9 +314,10 @@ export async function POST(req: NextRequest) {
       .eq('channel_input', channelInput);
 
     return NextResponse.json({
-      added: newVideos.length,
+      added: totalAdded,
       total: fetchedVideos.length,
       channelTitle,
+      ...(batchErrors.length > 0 && { warnings: batchErrors }),
     });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'حدث خطأ غير متوقع';
