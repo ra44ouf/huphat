@@ -22,6 +22,7 @@ export const metadata: Metadata = {
 
 import { MobileNav } from "@/components/mobile-nav";
 import { SplashScreen } from "@/components/splash-screen";
+import { Analytics } from "@vercel/analytics/react";
 
 export default function RootLayout({
   children,
@@ -40,6 +41,7 @@ export default function RootLayout({
           {children}
           <MobileNav />
         </Providers>
+        <Analytics />
       </body>
     </html>
   );
