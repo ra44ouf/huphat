@@ -133,8 +133,9 @@ async function fetchAllPlaylistVideos(uploadsPlaylistId: string): Promise<VideoI
         item.snippet?.thumbnails?.high?.url ||
         `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 
-      const title: string = item.snippet?.title || '';
-      const description: string = item.snippet?.description || '';
+      // Remove null bytes that cause PostgreSQL JSON parser to crash
+      const title: string = (item.snippet?.title || '').replace(/\0/g, '');
+      const description: string = (item.snippet?.description || '').replace(/\0/g, '');
 
       videos.push({
         youtube_video_id: videoId,
