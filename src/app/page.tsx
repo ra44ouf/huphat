@@ -10,11 +10,12 @@ import { Footer } from "@/components/footer";
 import { useApp } from "@/components/providers";
 import { translations } from "@/lib/translations";
 import { createClient } from "@/utils/supabase/client";
+import { motion } from "framer-motion";
 
 export default function Home() {
   const { lang } = useApp();
   const t = translations[lang].stats;
-  const [stats, setStats] = useState({ answers: 0, scholars: 0, readers: 10420 });
+  const [stats, setStats] = useState({ answers: 0, scholars: 0 });
   const supabase = createClient();
 
   useEffect(() => {
@@ -35,7 +36,6 @@ export default function Home() {
           setStats({
             answers: doubtsCount || 0,
             scholars: scholarsCount || 0,
-            readers: 10420 + ((doubtsCount || 0) * 153), // Simulated logic for realistic readers
           });
         } else {
             console.error("Error fetching stats:", doubtsError || scholarsError);
@@ -53,10 +53,9 @@ export default function Home() {
       <Hero />
       
       {/* Stats Section */}
-      <div className="bg-white border-b border-shubuhat-border-lite grid grid-cols-3">
-        <StatItem number={stats.answers > 0 ? `+${stats.answers.toLocaleString()}` : "0"} label={t.answers} />
-        <StatItem number={stats.scholars > 0 ? stats.scholars.toLocaleString() : "0"} label={t.scholars} />
-        <StatItem number={`+${Math.floor(stats.readers / 1000)}K`} label={t.readers} border={false} />
+      <div className="bg-white/80 backdrop-blur-lg border-b border-shubuhat-border-lite grid grid-cols-2">
+        <StatItem number={stats.answers > 0 ? `+${stats.answers.toLocaleString()}` : "0"} label={t.answers} delay={0} />
+        <StatItem number={stats.scholars > 0 ? stats.scholars.toLocaleString() : "0"} label={t.scholars} border={false} delay={0.1} />
       </div>
 
       <CategoriesGrid />
@@ -67,15 +66,20 @@ export default function Home() {
   );
 }
 
-function StatItem({ number, label, border = true }: { number: string; label: string; border?: boolean }) {
+function StatItem({ number, label, border = true, delay = 0 }: { number: string; label: string; border?: boolean; delay?: number }) {
   return (
-    <div className={`py-6 text-center ${border ? 'border-l border-shubuhat-border-lite' : ''}`}>
-      <span className="block text-2xl md:text-3xl font-black text-shubuhat-green leading-none mb-1">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4, ease: "easeOut" }}
+      className={`py-8 text-center ${border ? 'border-l border-shubuhat-border-lite' : ''}`}
+    >
+      <span className="block text-3xl md:text-4xl font-black text-shubuhat-green leading-none mb-2">
         {number}
       </span>
-      <span className="block text-[10px] md:text-sm font-bold text-shubuhat-text-3 uppercase tracking-wider">
+      <span className="block text-[11px] md:text-sm font-bold text-shubuhat-text-3 uppercase tracking-wider">
         {label}
       </span>
-    </div>
+    </motion.div>
   );
 }

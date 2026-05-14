@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useApp } from "@/components/providers";
 import { translations } from "@/lib/translations";
 import { Home, Book, Video, HelpCircle, Download, User } from "lucide-react";
+import { motion } from "framer-motion";
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -54,31 +55,43 @@ export function MobileNav() {
     <>
       {/* Install Prompt Overlay for PWA */}
       {showInstallPrompt && (
-        <div className="fixed bottom-[100px] left-4 right-4 z-[60] bg-white border border-shubuhat-border-lite p-4 rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] flex items-center justify-between animate-in slide-in-from-bottom-5 md:hidden">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 30 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="fixed bottom-[100px] left-4 right-4 z-[60] bg-white/90 backdrop-blur-xl border border-shubuhat-border-lite p-4 rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)] flex items-center justify-between md:hidden"
+        >
             <div className="flex flex-col">
-                <span className="text-sm font-black text-shubuhat-green">{lang === 'ar' ? 'تثبيت التطبيق 📱' : 'Install App 📱'}</span>
-                <span className="text-xs text-shubuhat-text-3 font-bold">{lang === 'ar' ? 'للوصول السريع وبدون إنترنت' : 'For quick & offline access'}</span>
+                <span className="text-sm font-black text-shubuhat-green">
+                  {lang === 'ar' ? 'تثبيت التطبيق 📱' : 'Install App 📱'}
+                </span>
+                <span className="text-xs text-shubuhat-text-3 font-bold">
+                  {lang === 'ar' ? 'للوصول السريع وبدون إنترنت' : 'For quick & offline access'}
+                </span>
             </div>
             <div className="flex gap-2">
-                <button 
+                <motion.button 
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setShowInstallPrompt(false)}
                   className="px-3 py-2 text-xs font-bold text-shubuhat-text-3 hover:text-shubuhat-text-1"
                 >
                     {lang === 'ar' ? 'لاحقاً' : 'Later'}
-                </button>
-                <button 
+                </motion.button>
+                <motion.button 
+                  whileTap={{ scale: 0.9 }}
                   onClick={handleInstallClick}
-                  className="bg-shubuhat-gold text-shubuhat-green px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1 shadow-md active:scale-95 transition-transform"
+                  className="bg-shubuhat-gold text-shubuhat-green px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1 shadow-md"
                 >
                     <Download size={14} />
                     {lang === 'ar' ? 'تثبيت' : 'Install'}
-                </button>
+                </motion.button>
             </div>
-        </div>
+        </motion.div>
       )}
 
-      {/* Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-6 left-6 right-6 z-50 bg-shubuhat-green-dark/80 backdrop-blur-xl border border-white/10 rounded-full flex justify-between items-center px-2 py-2 shadow-2xl shadow-shubuhat-green/20">
+      {/* Bottom Navigation Bar - iOS Style */}
+      <nav className="md:hidden fixed bottom-5 left-5 right-5 z-50 bg-shubuhat-green-dark/70 backdrop-blur-2xl backdrop-saturate-200 border border-white/10 rounded-[28px] flex justify-between items-center px-2 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.35)]">
         {getNavItems().map((item) => {
           const isActive = item.matchExact 
             ? pathname === item.href 
@@ -88,20 +101,32 @@ export function MobileNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center w-16 h-14 rounded-full transition-all relative ${
-                isActive ? 'text-shubuhat-gold' : 'text-white/50 hover:text-white/80'
-              }`}
+              className="flex flex-col items-center justify-center w-16 h-14 rounded-[22px] transition-all relative"
             >
               {isActive && (
-                <div className="absolute inset-0 bg-shubuhat-gold/10 rounded-full animate-in fade-in" />
+                <motion.div 
+                  layoutId="mobile-nav-indicator"
+                  className="absolute inset-0 bg-shubuhat-gold/15 rounded-[22px]"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
               )}
-              <item.icon 
-                size={isActive ? 22 : 20} 
-                className={`transition-all duration-300 z-10 ${isActive ? 'translate-y-[-2px]' : ''}`} 
-              />
-              <span className={`text-[9px] font-black tracking-widest mt-1 z-10 transition-all ${isActive ? 'opacity-100' : 'opacity-0 translate-y-2'}`}>
+              <motion.div
+                animate={isActive ? { scale: 1.15, y: -2 } : { scale: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                className="z-10"
+              >
+                <item.icon 
+                  size={isActive ? 22 : 20} 
+                  className={`transition-colors duration-300 ${isActive ? 'text-shubuhat-gold' : 'text-white/40'}`}
+                />
+              </motion.div>
+              <motion.span 
+                animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 4 }}
+                transition={{ duration: 0.2 }}
+                className={`text-[9px] font-black tracking-widest mt-1 z-10 ${isActive ? 'text-shubuhat-gold' : 'text-white/40'}`}
+              >
                 {item.label}
-              </span>
+              </motion.span>
             </Link>
           );
         })}

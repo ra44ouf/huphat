@@ -7,18 +7,26 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'إلى النور باليقين',
     start_url: '/',
     display: 'standalone',
-    background_color: '#0f3d2e',
-    theme_color: '#c9a646',
+    background_color: '#f9f7f3',
+    theme_color: '#0f3d2e',
     icons: [
       {
-        src: '/icon.jpg',
+        src: '/icon-512.png',
         sizes: '192x192',
-        type: 'image/jpeg',
+        type: 'image/png',
+        purpose: 'any',
       },
       {
-        src: '/icon.jpg',
+        src: '/icon-512.png',
         sizes: '512x512',
-        type: 'image/jpeg',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: '/icon-512.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
       },
     ],
   };

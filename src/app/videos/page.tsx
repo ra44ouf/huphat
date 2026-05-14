@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { Navbar } from "@/components/navbar";
-import { Footer } from "@/components/footer";
 import { useApp } from "@/components/providers";
 import { Play, Search, Video as VideoIcon, CheckCircle2, User as UserIcon, Loader2, ChevronDown } from "lucide-react";
 import Image from "next/image";
@@ -449,8 +448,6 @@ export default function VideosPage() {
           </div>
         )}
       </section>
-
-      <Footer />
     </main>
   );
 }
