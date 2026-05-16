@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useApp } from "@/components/providers";
 import { translations } from "@/lib/translations";
-import { Home, Book, Video, HelpCircle, Download, User } from "lucide-react";
+import { Home, Book, Video, HelpCircle, Download, User, Radio } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function MobileNav() {
@@ -19,7 +19,6 @@ export function MobileNav() {
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // We check if it's already installed
       if (!window.matchMedia('(display-mode: standalone)').matches) {
         setShowInstallPrompt(true);
       }
@@ -48,7 +47,7 @@ export function MobileNav() {
     { href: "/doubts", icon: HelpCircle, label: t.doubts },
     { href: "/books", icon: Book, label: t.books },
     { href: "/videos", icon: Video, label: t.videos },
-    { href: user ? "/profile" : "/login", icon: User, label: user ? (lang === 'ar' ? 'حسابي' : 'Account') : t.signIn },
+    { href: "/live", icon: Radio, label: t.live, isLive: true },
   ];
 
   return (
@@ -106,24 +105,38 @@ export function MobileNav() {
               {isActive && (
                 <motion.div 
                   layoutId="mobile-nav-indicator"
-                  className="absolute inset-0 bg-shubuhat-gold/15 rounded-[22px]"
+                  className={`absolute inset-0 rounded-[22px] ${item.isLive ? 'bg-red-500/20' : 'bg-shubuhat-gold/15'}`}
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
               <motion.div
                 animate={isActive ? { scale: 1.15, y: -2 } : { scale: 1, y: 0 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                className="z-10"
+                className="z-10 relative"
               >
+                {item.isLive && (
+                  <span className="absolute -top-1 -right-1 flex h-2 w-2 z-20">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                  </span>
+                )}
                 <item.icon 
                   size={isActive ? 22 : 20} 
-                  className={`transition-colors duration-300 ${isActive ? 'text-shubuhat-gold' : 'text-white/40'}`}
+                  className={`transition-colors duration-300 ${
+                    isActive 
+                      ? item.isLive ? 'text-red-400' : 'text-shubuhat-gold' 
+                      : item.isLive ? 'text-red-400/60' : 'text-white/40'
+                  }`}
                 />
               </motion.div>
               <motion.span 
                 animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 4 }}
                 transition={{ duration: 0.2 }}
-                className={`text-[9px] font-black tracking-widest mt-1 z-10 ${isActive ? 'text-shubuhat-gold' : 'text-white/40'}`}
+                className={`text-[9px] font-black tracking-widest mt-1 z-10 ${
+                  isActive 
+                    ? item.isLive ? 'text-red-400' : 'text-shubuhat-gold' 
+                    : item.isLive ? 'text-red-400/60' : 'text-white/40'
+                }`}
               >
                 {item.label}
               </motion.span>

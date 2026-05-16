@@ -5,6 +5,7 @@ export const translations = {
       doubts: "الشبهات",
       books: "الكتب",
       videos: "الفيديوهات",
+      live: "مباشر",
       signIn: "تسجيل الدخول",
     },
     hero: {
@@ -75,6 +76,7 @@ export const translations = {
       doubts: "Doubts",
       books: "Books",
       videos: "Videos",
+      live: "Live",
       signIn: "Sign In",
     },
     hero: {

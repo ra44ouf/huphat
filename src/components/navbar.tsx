@@ -35,6 +35,7 @@ export function Navbar() {
     { href: "/doubts", label: t.doubts, active: pathname.startsWith("/doubts") },
     { href: "/books", label: t.books, active: pathname.startsWith("/books") },
     { href: "/videos", label: t.videos, active: pathname.startsWith("/videos") },
+    { href: "/live", label: t.live, active: pathname.startsWith("/live"), isLive: true },
   ];
 
   return (
@@ -66,17 +67,27 @@ export function Navbar() {
             className={`relative px-5 py-2.5 rounded-xl transition-all text-[11px] font-bold ${
               item.active
                 ? 'text-shubuhat-gold'
-                : 'text-white/60 hover:text-white hover:bg-white/10 border border-transparent'
+                : item.isLive
+                  ? 'text-red-300 hover:text-red-200 hover:bg-red-500/10 border border-transparent'
+                  : 'text-white/60 hover:text-white hover:bg-white/10 border border-transparent'
             }`}
           >
             {item.active && (
               <motion.div
                 layoutId="desktop-nav-indicator"
-                className="absolute inset-0 bg-shubuhat-gold/10 rounded-xl border border-shubuhat-gold/20"
+                className={`absolute inset-0 rounded-xl border ${item.isLive ? 'bg-red-500/10 border-red-500/20' : 'bg-shubuhat-gold/10 border-shubuhat-gold/20'}`}
                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
               />
             )}
-            <span className="relative z-10">{item.label}</span>
+            <span className="relative z-10 flex items-center gap-1.5">
+              {item.isLive && (
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                </span>
+              )}
+              {item.label}
+            </span>
           </Link>
         ))}
       </div>

@@ -3,7 +3,7 @@ import { createClient } from "@/utils/supabase/server";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import Link from "next/link";
-import { LayoutDashboard, BookOpen, Video, MessageCircle, LogOut, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, BookOpen, Video, MessageCircle, LogOut, ShieldCheck, Radio } from "lucide-react";
 import { logout } from "@/app/login/actions";
 
 export default async function DashboardLayout({
@@ -74,6 +74,7 @@ export default async function DashboardLayout({
                 <DashboardNavLink href="/dashboard/doubts" icon={<MessageCircle size={20} />}>إدارة الشبهات</DashboardNavLink>
                 <DashboardNavLink href="/dashboard/books" icon={<BookOpen size={20} />}>إدارة الكتب</DashboardNavLink>
                 <DashboardNavLink href="/dashboard/videos" icon={<Video size={20} />}>إدارة الفيديوهات</DashboardNavLink>
+                <DashboardNavLink href="/dashboard/live" icon={<Radio size={20} />}>البث المباشر</DashboardNavLink>
             </nav>
 
             <div className="mt-8 pt-8 border-t border-shubuhat-border-lite">
