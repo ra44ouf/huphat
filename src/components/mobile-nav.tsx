@@ -48,6 +48,7 @@ export function MobileNav() {
     { href: "/books", icon: Book, label: t.books },
     { href: "/videos", icon: Video, label: t.videos },
     { href: "/live", icon: Radio, label: t.live, isLive: true },
+    { href: user ? "/profile" : "/login", icon: User, label: user ? (lang === 'ar' ? 'حسابي' : 'Account') : t.signIn },
   ];
 
   return (
@@ -100,7 +101,7 @@ export function MobileNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center justify-center w-16 h-14 rounded-[22px] transition-all relative"
+              className="flex flex-col items-center justify-center flex-1 h-14 rounded-[22px] transition-all relative"
             >
               {isActive && (
                 <motion.div 
